@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { register, reset, selectAuthError, selectAuthLoading, selectIsAuthenticated } from './authSlice'; // Assuming selectors are exported
+import { register, clearError, selectAuthError, selectAuthLoading, selectIsAuthenticated } from './authSlice';
 
 function RegisterForm() {
     const [formData, setFormData] = useState({
@@ -14,75 +14,59 @@ function RegisterForm() {
     const [passwordError, setPasswordError] = useState('');
 
     const { username, email, password, confirmPassword } = formData;
-
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    // Select state from Redux store
     const isLoading = useSelector(selectAuthLoading);
-    const authError = useSelector(selectAuthError); // Get specific auth error message
+    const authError = useSelector(selectAuthError);
     const isAuthenticated = useSelector(selectIsAuthenticated);
 
-    // Reset Redux auth state on component mount/unmount
-    useEffect(() => {
-        // Reset error/loading state when component mounts
-        dispatch(reset());
-        // Optional: Reset state when component unmounts
-        // return () => {
-        //   dispatch(reset());
-        // }
-    }, [dispatch]);
-
-    // Redirect if registration is successful
+    // Redirect after successful registration
     useEffect(() => {
         if (isAuthenticated) {
-            // Registration successful, redirect to home or profile page
-            navigate('/'); // Or '/profile' or a welcome page
+            navigate('/');
         }
     }, [isAuthenticated, navigate]);
 
+    // Clear errors when component unmounts
+    useEffect(() => {
+        return () => {
+            dispatch(clearError());
+        };
+    }, [dispatch]);
+
     const onChange = (e) => {
-        setFormData((prevState) => ({
-            ...prevState,
+        setFormData(prev => ({
+            ...prev,
             [e.target.name]: e.target.value,
         }));
-        // Clear password mismatch error when user types
+
+        // Clear password error when user types
         if (e.target.name === 'password' || e.target.name === 'confirmPassword') {
             setPasswordError('');
-        }
-        // Clear global auth error when user starts typing in any field
-        if(authError) {
-            dispatch(reset()); // Reset Redux error state
         }
     };
 
     const onSubmit = (e) => {
         e.preventDefault();
-        setPasswordError(''); // Clear previous password error
-        dispatch(reset()); // Clear previous global auth errors
+        setPasswordError('');
 
         if (password !== confirmPassword) {
             setPasswordError('Passwords do not match');
-        } else {
-            const userData = {
-                username,
-                email,
-                password,
-                // Add onboarding fields here if collected at registration
-            };
-            dispatch(register(userData));
+            return;
         }
+
+        dispatch(register({ username, email, password }));
     };
 
     return (
         <form onSubmit={onSubmit} className="bg-gray-900 p-8 rounded-lg shadow-lg space-y-6">
-            {/* Display global authentication errors from Redux */}
-            {authError && !passwordError && ( // Show authError only if no password mismatch error
+            {authError && !passwordError && (
                 <div className="p-3 bg-red-900 border border-red-700 rounded-md">
                     <p className="text-sm text-red-100">{authError}</p>
                 </div>
             )}
-            {/* Display password mismatch error */}
+
             {passwordError && (
                 <div className="p-3 bg-red-900 border border-red-700 rounded-md">
                     <p className="text-sm text-red-100">{passwordError}</p>
@@ -154,8 +138,6 @@ function RegisterForm() {
                     placeholder="••••••••"
                 />
             </div>
-
-            {/* Add Onboarding fields here later if needed (Experience Level, Skills) */}
 
             <div>
                 <button

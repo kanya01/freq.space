@@ -1,8 +1,8 @@
 // frontend/src/features/auth/LoginForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { login, reset, selectAuthError, selectAuthLoading, selectIsAuthenticated } from './authSlice';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { login, clearError, selectAuthError, selectAuthLoading, selectIsAuthenticated } from './authSlice';
 
 function LoginForm() {
     const [formData, setFormData] = useState({
@@ -11,51 +11,44 @@ function LoginForm() {
     });
 
     const { email, password } = formData;
-
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
 
     const isLoading = useSelector(selectAuthLoading);
     const authError = useSelector(selectAuthError);
     const isAuthenticated = useSelector(selectIsAuthenticated);
 
-    // Reset Redux auth state on component mount
-    useEffect(() => {
-        dispatch(reset());
-    }, [dispatch]);
-
-    // Redirect if login is successful
+    // Redirect after successful login
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/'); // Redirect to home or dashboard after login
+            // Get the previous location from navigation state or default to home
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, location]);
+
+    // Clear errors when component unmounts
+    useEffect(() => {
+        return () => {
+            dispatch(clearError());
+        };
+    }, [dispatch]);
 
     const onChange = (e) => {
-        setFormData((prevState) => ({
-            ...prevState,
+        setFormData(prev => ({
+            ...prev,
             [e.target.name]: e.target.value,
         }));
-        // Clear global auth error when user starts typing
-        if(authError) {
-            dispatch(reset());
-        }
     };
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
-        dispatch(reset()); // Clear previous errors
-
-        const userData = {
-            email,
-            password,
-        };
-        dispatch(login(userData));
+        dispatch(login({ email, password }));
     };
 
     return (
         <form onSubmit={onSubmit} className="bg-gray-900 p-8 rounded-lg shadow-lg space-y-6">
-            {/* Display login errors */}
             {authError && (
                 <div className="p-3 bg-red-900 border border-red-700 rounded-md">
                     <p className="text-sm text-red-100">{authError}</p>
