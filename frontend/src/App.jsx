@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loadUser } from './features/auth/authSlice';
+import OnboardingFlow from './features/onboarding/OnboardingFlow';
 
 // Pages
 import RegisterPage from './pages/RegisterPage';
@@ -32,6 +33,7 @@ function App() {
                 <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/onboarding" element={<OnboardingFlow />} />
                 </Route>
 
                 {/* 404 Not Found */}

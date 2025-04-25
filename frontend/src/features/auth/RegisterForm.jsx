@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { register, clearError, selectAuthError, selectAuthLoading, selectIsAuthenticated } from './authSlice';
+import { register, clearError, selectAuthError, selectAuthLoading, selectIsAuthenticated, selectUser } from './authSlice';
 
 function RegisterForm() {
     const [formData, setFormData] = useState({
@@ -20,13 +20,16 @@ function RegisterForm() {
     const isLoading = useSelector(selectAuthLoading);
     const authError = useSelector(selectAuthError);
     const isAuthenticated = useSelector(selectIsAuthenticated);
+    const user = useSelector(selectUser);
 
     // Redirect after successful registration
     useEffect(() => {
-        if (isAuthenticated) {
+        if (isAuthenticated && user && !user.profile?.onboardingCompleted) {
+            navigate('/onboarding');
+        } else if (isAuthenticated) {
             navigate('/');
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, user, navigate]);
 
     // Clear errors when component unmounts
     useEffect(() => {

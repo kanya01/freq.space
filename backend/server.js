@@ -7,6 +7,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const passport = require('passport'); // Import passport
+const onboardingRoutes = require('./routes/onboarding'); // Import onboarding routes
 // const initializeSocket = require('./config/socket'); // We'll create this later
 
 // Connect to Database
@@ -27,12 +28,13 @@ require('./config/passport')(passport);
 // Basic Route for testing
 app.get('/', (req, res) => res.send('API Running'));
 
-// Define Routes (We'll add specific routes later)
+//  Routes
 // app.use('/api/v1/auth', require('./routes/auth'));
 // app.use('/api/v1/users', require('./routes/users'));
 // ... etc
 app.get('/', (req, res) => res.send('API Running')); // Keep basic test route
 app.use('/api/v1/auth', authRoutes); // Use auth routes
+app.use('/api/v1/onboarding', onboardingRoutes);
 
 
 const PORT = process.env.PORT || 5001;

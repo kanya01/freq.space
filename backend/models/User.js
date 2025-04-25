@@ -1,13 +1,35 @@
-// backend/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
-    email: { type: String, required: [true, 'Email is required'], unique: true, lowercase: true, trim: true, match: [/\S+@\S+\.\S+/, 'Please use a valid email address.'], index: true },
-    username: { type: String, required: [true, 'Username is required'], unique: true, trim: true, minlength: [3, 'Username must be at least 3 characters long'], index: true },
-    password: { type: String, required: [true, 'Password is required'], minlength: [6, 'Password must be at least 6 characters long'], select: false }, // select: false hides it by default
-    emailVerified: { type: Boolean, default: false },
+    email: {
+        type: String,
+        required: [true, 'Email is required'],
+        unique: true,
+        lowercase: true,
+        trim: true,
+        match: [/\S+@\S+\.\S+/, 'Please use a valid email address.'],
+        index: true
+    },
+    username: {
+        type: String,
+        required: [true, 'Username is required'],
+        unique: true,
+        trim: true,
+        minlength: [3, 'Username must be at least 3 characters long'],
+        index: true
+    },
+    password: {
+        type: String,
+        required: [true, 'Password is required'],
+        minlength: [6, 'Password must be at least 6 characters long'],
+        select: false
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
     profile: {
         firstName: { type: String, trim: true, default: '' },
         lastName: { type: String, trim: true, default: '' },
@@ -16,10 +38,44 @@ const userSchema = new Schema({
             city: { type: String, trim: true, default: '', index: true },
             country: { type: String, trim: true, default: '', index: true },
         },
-        experienceLevel: { type: String, enum: ['Hobbyist', 'Part-time', 'Pro', 'Maestro', null], default: null }, // Allow null if not set during onboarding
+        // NEW: User type field for onboarding
+        userType: {
+            type: String,
+            enum: ['Artist', 'Producer', 'Engineer', 'Songwriter', 'Vocalist', 'Session Musician', 'Video Producer', null],
+            default: null
+        },
+        // EXISTING: Experience level field
+        experienceLevel: {
+            type: String,
+            enum: ['Hobbyist', 'Part-time', 'Pro', 'Maestro', null],
+            default: null
+        },
+        // EXISTING: Skills field
         skills: { type: [String], default: [], index: true },
         socialLinks: { type: Map, of: String, default: {} },
-        avatarUrl: { type: String, default: '' }
+        avatarUrl: { type: String, default: '' },
+        // NEW: Onboarding tracking fields
+        onboardingCompleted: {
+            type: Boolean,
+            default: false
+        },
+        onboardingStep: {
+            type: Number,
+            default: 0
+        },
+        // NEW: Portfolio field for work samples
+        portfolio: [{
+            title: { type: String, required: true },
+            description: { type: String },
+            mediaUrl: { type: String, required: true },
+            mediaType: {
+                type: String,
+                enum: ['audio', 'video', 'image'],
+                required: true
+            },
+            thumbnailUrl: { type: String },
+            createdAt: { type: Date, default: Date.now }
+        }]
     },
     stripeConnect: {
         accountId: { type: String },
@@ -30,30 +86,24 @@ const userSchema = new Schema({
 }, { timestamps: true });
 
 // --- Password Hashing Middleware ---
-// Hash password before saving a new user
 userSchema.pre('save', async function(next) {
-    // Only run this function if password was actually modified (or is new)
     if (!this.isModified('password')) return next();
 
     try {
-        const salt = await bcrypt.genSalt(10); // Generate salt
-        this.password = await bcrypt.hash(this.password, salt); // Hash password
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
         next();
     } catch (error) {
-        next(error); // Pass error to next middleware/handler
+        next(error);
     }
 });
 
 // --- Password Comparison Method ---
-// Method to compare candidate password with the hashed password in the DB
 userSchema.methods.comparePassword = async function(candidatePassword) {
-    // 'this.password' refers to the password field of the specific user document
-    // We need to explicitly select it if it was hidden with 'select: false'
     const user = await this.constructor.findOne({ _id: this._id }).select('+password');
-    if (!user) return false; // Should not happen if method is called on existing user, but safety check
+    if (!user) return false;
     return await bcrypt.compare(candidatePassword, user.password);
 };
-
 
 const User = mongoose.model('User', userSchema);
 
