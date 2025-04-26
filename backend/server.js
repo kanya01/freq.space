@@ -4,10 +4,12 @@ const express = require('express');
 const http = require('http'); // Required for Socket.IO
 const { Server } = require("socket.io"); // Socket.IO server class
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const passport = require('passport'); // Import passport
 const onboardingRoutes = require('./routes/onboarding'); // Import onboarding routes
+const profileRoutes = require('./routes/profile');
 // const initializeSocket = require('./config/socket'); // We'll create this later
 
 // Connect to Database
@@ -35,6 +37,9 @@ app.get('/', (req, res) => res.send('API Running'));
 app.get('/', (req, res) => res.send('API Running')); // Keep basic test route
 app.use('/api/v1/auth', authRoutes); // Use auth routes
 app.use('/api/v1/onboarding', onboardingRoutes);
+app.use('/api/v1/profile', profileRoutes);
+//serve static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 const PORT = process.env.PORT || 5001;

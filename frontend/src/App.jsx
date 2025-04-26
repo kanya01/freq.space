@@ -10,6 +10,8 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
+import PublicProfilePage from './pages/PublicProfilePage';
+import EditProfilePage from "./pages/EditProfilePage.jsx";
 
 // Components
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -28,12 +30,16 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/u/:username" element={<PublicProfilePage />} />
+
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/onboarding" element={<OnboardingFlow />} />
+                    <Route path="/u/:username" element={<PublicProfilePage />} />
+                    <Route path="/profile/edit" element={<EditProfilePage />} />
                 </Route>
 
                 {/* 404 Not Found */}
