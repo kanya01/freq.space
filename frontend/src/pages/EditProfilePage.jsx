@@ -1,3 +1,4 @@
+// In frontend/src/pages/EditProfilePage.jsx
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,9 @@ const EditProfilePage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState('');
+    const [coverPreview, setCoverPreview] = useState('');
+
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -32,6 +36,10 @@ const EditProfilePage = () => {
 
     useEffect(() => {
         if (user) {
+            // Set existing profile images if available
+            setAvatarPreview(user.profile.avatarUrl || '');
+            setCoverPreview(user.profile.coverImageUrl || '');
+
             setFormData({
                 firstName: user.profile.firstName || '',
                 lastName: user.profile.lastName || '',
@@ -73,6 +81,22 @@ const EditProfilePage = () => {
         }
     };
 
+    // Handle image preview on file select
+    const handleImageChange = (e) => {
+        const { id, files } = e.target;
+        if (files && files[0]) {
+            const fileReader = new FileReader();
+            fileReader.onload = (event) => {
+                if (id === 'avatar') {
+                    setAvatarPreview(event.target.result);
+                } else if (id === 'coverImage') {
+                    setCoverPreview(event.target.result);
+                }
+            };
+            fileReader.readAsDataURL(files[0]);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -89,7 +113,7 @@ const EditProfilePage = () => {
             formDataToSend.append('skills', JSON.stringify(formData.skills));
             formDataToSend.append('socialLinks', JSON.stringify(formData.socialLinks));
 
-            // Add file if selected
+            // Add files if selected
             const avatarInput = document.getElementById('avatar');
             if (avatarInput.files[0]) {
                 formDataToSend.append('avatar', avatarInput.files[0]);
@@ -104,6 +128,7 @@ const EditProfilePage = () => {
             dispatch(updateUser(updatedUser));
             navigate('/profile');
         } catch (err) {
+            console.error('Error updating profile:', err);
             setError(err.response?.data?.message || 'Failed to update profile');
         } finally {
             setLoading(false);
@@ -122,33 +147,32 @@ const EditProfilePage = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Avatar */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Avatar
-                        </label>
-                        <input
-                            type="file"
-                            id="avatar"
-                            accept="image/*"
-                            className="block w-full text-sm text-gray-400
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-gray-800 file:text-white
-                                hover:file:bg-gray-700"
-                        />
-                    </div>
-
-                    {/* Cover Image */}
+                    {/* Cover Image Preview */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Cover Image
                         </label>
+                        {coverPreview && (
+                            <div className="mb-3 relative">
+                                <img
+                                    src={coverPreview}
+                                    alt="Cover Preview"
+                                    className="w-full h-32 object-cover rounded-lg"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setCoverPreview('')}
+                                    className="absolute top-2 right-2 bg-red-600 rounded-full p-1 text-white"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        )}
                         <input
                             type="file"
                             id="coverImage"
                             accept="image/*"
+                            onChange={handleImageChange}
                             className="block w-full text-sm text-gray-400
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-md file:border-0
@@ -158,8 +182,47 @@ const EditProfilePage = () => {
                         />
                     </div>
 
+                    {/* Avatar Preview */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Avatar
+                        </label>
+                        {avatarPreview && (
+                            <div className="mb-3 flex justify-center">
+                                <div className="relative">
+                                    <img
+                                        src={avatarPreview}
+                                        alt="Avatar Preview"
+                                        className="w-32 h-32 rounded-full object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setAvatarPreview('')}
+                                        className="absolute top-0 right-0 bg-red-600 rounded-full p-1 text-white"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        <input
+                            type="file"
+                            id="avatar"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="block w-full text-sm text-gray-400
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-gray-800 file:text-white
+                                hover:file:bg-gray-700"
+                        />
+                    </div>
+
+                    {/* Rest of the form fields... */}
                     {/* Name Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* First Name & Last Name fields */}
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-2">
                                 First Name
@@ -186,6 +249,7 @@ const EditProfilePage = () => {
                         </div>
                     </div>
 
+                    {/* Rest of the form remains the same... */}
                     {/* Bio */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">

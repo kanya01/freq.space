@@ -27,24 +27,36 @@ exports.updateProfile = async (req, res) => {
     try {
         const { firstName, lastName, bio, location, socialLinks, skills } = req.body;
 
+        //Parse JSON strings from FormData
+        const parsedLocation = location ? JSON.parse(location) : {};
+        const parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : {};
+        const parsedSkills = skills ? JSON.parse(skills) : [];
+
         const updateData = {
             'profile.firstName': firstName,
             'profile.lastName': lastName,
             'profile.bio': bio,
-            'profile.location': location,
-            'profile.skills': skills,
-            'profile.socialLinks': socialLinks
+            'profile.location': parsedLocation,
+            'profile.skills': parsedSkills,
+            'profile.socialLinks': parsedSocialLinks
         };
 
         // Handle file uploads if present
         if (req.files) {
-            if (req.files.avatar) {
-                updateData['profile.avatarUrl'] = `/uploads/avatars/${req.files.avatar[0].filename}`;
+            if (req.files.avatar && req.files.avatar.length > 0) {
+                const avatarPath = `/uploads/avatars/${req.files.avatar[0].filename}`;
+                console.log('Setting avatar URL to:', avatarPath);
+                updateData['profile.avatarUrl'] = avatarPath;
             }
-            if (req.files.coverImage) {
-                updateData['profile.coverImageUrl'] = `/uploads/covers/${req.files.coverImage[0].filename}`;
+
+            if (req.files.coverImage && req.files.coverImage.length > 0) {
+                const coverPath = `/uploads/covers/${req.files.coverImage[0].filename}`;
+                console.log('Setting cover image URL to:', coverPath);
+                updateData['profile.coverImageUrl'] = coverPath;
             }
         }
+
+        console.log('Updating user with data:', updateData);
 
         const user = await User.findByIdAndUpdate(
             req.user.id,
@@ -55,7 +67,7 @@ exports.updateProfile = async (req, res) => {
         res.json(user);
     } catch (error) {
         console.error('Update profile error:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 

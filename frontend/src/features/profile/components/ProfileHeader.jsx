@@ -1,18 +1,33 @@
 // frontend/src/features/profile/components/ProfileHeader.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PencilIcon } from '@heroicons/react/24/outline';
 
 const ProfileHeader = ({ user, isOwnProfile = false }) => {
+    const [avatarError, setAvatarError] = useState(false);
+    const [coverError, setCoverError] = useState(false);
+
+    // Use absolute URLs for images - very important!
+    const getFullUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        // Make sure we use the full URL including http://localhost:5001
+        return `http://localhost:5001${url}`;
+    };
+
+    const avatarUrl = !avatarError ? getFullUrl(user.profile.avatarUrl) : null;
+    const coverImageUrl = !coverError ? getFullUrl(user.profile.coverImageUrl) : null;
+
     return (
         <div className="relative">
             {/* Cover Image */}
-            <div className="h-64 bg-gray-800 relative">
-                {user.profile.coverImageUrl ? (
+            <div className="h-48 sm:h-64 bg-gray-800 relative">
+                {coverImageUrl ? (
                     <img
-                        src={user.profile.coverImageUrl}
+                        src={coverImageUrl}
                         alt="Cover"
                         className="w-full h-full object-cover"
+                        onError={() => setCoverError(true)}
                     />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-r from-gray-800 to-gray-900" />
@@ -31,18 +46,19 @@ const ProfileHeader = ({ user, isOwnProfile = false }) => {
 
             {/* Profile Info */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="-mt-16 sm:-mt-20 sm:flex sm:items-end sm:space-x-5">
-                    {/* Avatar with Edit Option */}
-                    <div className="relative flex">
-                        {user.profile.avatarUrl ? (
+                <div className="relative flex flex-col sm:flex-row sm:items-end sm:space-x-5 pb-8">
+                    {/* Avatar */}
+                    <div className="relative -mt-16 sm:-mt-20">
+                        {avatarUrl && !avatarError ? (
                             <img
-                                src={user.profile.avatarUrl}
+                                src={avatarUrl}
                                 alt={user.username}
-                                className="h-32 w-32 rounded-full ring-4 ring-black"
+                                className="h-24 w-24 sm:h-32 sm:w-32 rounded-full ring-4 ring-black object-cover"
+                                onError={() => setAvatarError(true)}
                             />
                         ) : (
-                            <div className="h-32 w-32 rounded-full ring-4 ring-black bg-gray-700 flex items-center justify-center">
-                                <span className="text-4xl font-bold text-white">
+                            <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full ring-4 ring-black bg-gray-700 flex items-center justify-center">
+                                <span className="text-3xl sm:text-4xl font-bold text-white">
                                     {user.username.charAt(0).toUpperCase()}
                                 </span>
                             </div>
@@ -60,9 +76,9 @@ const ProfileHeader = ({ user, isOwnProfile = false }) => {
                     </div>
 
                     {/* User Info */}
-                    <div className="mt-6 sm:flex-1 sm:min-w-0 sm:flex sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
-                        <div className="sm:hidden md:block mt-6 min-w-0 flex-1">
-                            <h1 className="text-2xl font-bold text-white truncate">
+                    <div className="mt-6 sm:mt-0 sm:flex-1 sm:min-w-0 sm:flex sm:items-center sm:justify-between">
+                        <div className="flex-1">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-white truncate">
                                 {user.profile.firstName} {user.profile.lastName}
                             </h1>
                             <p className="text-lg text-gray-400">@{user.username}</p>

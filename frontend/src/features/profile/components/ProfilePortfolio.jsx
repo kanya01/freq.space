@@ -74,7 +74,7 @@ const ProfilePortfolio = ({ user, isOwnProfile = false }) => {
 
             {/* Portfolio grid */}
             {user.profile.portfolio?.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {user.profile.portfolio.map((item) => (
                         <div
                             key={item._id}

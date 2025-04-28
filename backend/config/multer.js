@@ -1,25 +1,44 @@
+// backend/config/multer.js
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+
+// Ensure upload directories exist
+const createUploadDirs = () => {
+    const dirs = ['uploads', 'uploads/avatars', 'uploads/covers', 'uploads/portfolio'];
+    dirs.forEach(dir => {
+        const dirPath = path.join(__dirname, '..', dir);
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+            console.log(`Created directory: ${dirPath}`);
+        }
+    });
+};
+
+createUploadDirs();
 
 // Configure storage for different file types
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        let uploadPath = 'uploads/';
+        let uploadPath = path.join(__dirname, '..', 'uploads');
 
         if (file.fieldname === 'avatar') {
-            uploadPath += 'avatars/';
+            uploadPath = path.join(uploadPath, 'avatars');
         } else if (file.fieldname === 'coverImage') {
-            uploadPath += 'covers/';
+            uploadPath = path.join(uploadPath, 'covers');
         } else if (file.fieldname === 'portfolio') {
-            uploadPath += 'portfolio/';
+            uploadPath = path.join(uploadPath, 'portfolio');
         }
 
+        console.log(`File destination set to: ${uploadPath} for ${file.fieldname}`);
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = crypto.randomBytes(16).toString('hex');
-        cb(null, `${Date.now()}-${uniqueSuffix}${path.extname(file.originalname)}`);
+        const finalName = `${Date.now()}-${uniqueSuffix}${path.extname(file.originalname)}`;
+        console.log(`Generated filename: ${finalName} for ${file.fieldname}`);
+        cb(null, finalName);
     }
 });
 
