@@ -1,4 +1,4 @@
-// backend/server.js
+// backend/server.js - Updated with tracks routes
 require('dotenv').config(); // Load .env variables first
 const express = require('express');
 const http = require('http'); // Required for Socket.IO
@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const passport = require('passport'); // Import passport
 const onboardingRoutes = require('./routes/onboarding'); // Import onboarding routes
 const profileRoutes = require('./routes/profile');
+const trackRoutes = require('./routes/tracks'); // Import track routes
 // const initializeSocket = require('./config/socket'); // We'll create this later
 
 // Connect to Database
@@ -18,8 +19,16 @@ connectDB();
 
 const app = express();
 
+// Ensure upload directories exist
+const uploadDirs = [
+    'uploads',
+    'uploads/avatars',
+    'uploads/covers',
+    'uploads/portfolio',
+    'uploads/tracks',    // New directory for tracks
+    'uploads/waveforms'  // New directory for waveform data
+];
 
-const uploadDirs = ['uploads', 'uploads/avatars', 'uploads/covers', 'uploads/portfolio'];
 uploadDirs.forEach(dir => {
     const dirPath = path.join(__dirname, dir);
     if (!fs.existsSync(dirPath)) {
@@ -36,7 +45,6 @@ app.use(cors({
 })); // Enable CORS for all origins (adjust for production)
 app.use(express.json()); // Parse JSON request bodies
 
-
 // Passport middleware initialization
 app.use(passport.initialize());
 // Configure Passport
@@ -45,13 +53,9 @@ require('./config/passport')(passport);
 // Basic Route for testing
 app.get('/', (req, res) => res.send('API Running'));
 
-//  Routes
-// app.use('/api/v1/auth', require('./routes/auth'));
-// app.use('/api/v1/users', require('./routes/users'));
-// ... etc
-//serve static files
+// Serve static files
 app.use('/uploads', (req, res, next) => {
-    // Add headers to allow cross-origin access to images
+    // Add headers to allow cross-origin access to files
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
@@ -62,12 +66,12 @@ app.use('/uploads', (req, res, next) => {
     next();
 });
 
+// API Routes
 app.get('/', (req, res) => res.send('API Running')); // Keep basic test route
 app.use('/api/v1/auth', authRoutes); // Use auth routes
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/profile', profileRoutes);
-
-
+app.use('/api/v1/tracks', trackRoutes); // Add tracks routes
 
 const PORT = process.env.PORT || 5001;
 
@@ -80,17 +84,29 @@ const io = new Server(server, {
     }
 });
 
-// Initialize Socket.IO logic (we'll create this function later)
-// initializeSocket(io);
-
+// Initialize Socket.IO logic
 io.on('connection', (socket) => {
     console.log('a user connected:', socket.id);
+
+    // Handle track play events
+    socket.on('track:play', (trackId) => {
+        // Broadcast to other users that someone is playing this track
+        socket.broadcast.emit('track:playing', {
+            trackId,
+            userId: socket.userId // If user ID is set during authentication
+        });
+    });
+
+    // Handle live comments
+    socket.on('track:comment', (data) => {
+        // Broadcast new comments to all users viewing the same track
+        socket.broadcast.emit('track:new-comment', data);
+    });
+
     socket.on('disconnect', () => {
         console.log('user disconnected:', socket.id);
     });
-    // Add more socket event listeners later for messaging
 });
-
 
 server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
 
@@ -100,11 +116,3 @@ process.on('unhandledRejection', (err, promise) => {
     // Close server & exit process (optional)
     // server.close(() => process.exit(1));
 });
-// log unhandled rejections
-// app.use((err, req, res, next) => {
-//     console.error('Unhandled error:', err);
-//     res.status(500).json({
-//         message: 'Internal server error',
-//         error: process.env.NODE_ENV === 'development' ? err.message : undefined
-//     });
-// });
