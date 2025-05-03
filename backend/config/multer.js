@@ -1,4 +1,4 @@
-// backend/config/multer.js
+// backend/config/multer.js - Extended for audio support
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
@@ -6,7 +6,15 @@ const fs = require('fs');
 
 // Ensure upload directories exist
 const createUploadDirs = () => {
-    const dirs = ['uploads', 'uploads/avatars', 'uploads/covers', 'uploads/portfolio'];
+    const dirs = [
+        'uploads',
+        'uploads/avatars',
+        'uploads/covers',
+        'uploads/portfolio',
+        'uploads/tracks',      // New directory for audio tracks
+        'uploads/waveforms'    // New directory for waveform data
+    ];
+
     dirs.forEach(dir => {
         const dirPath = path.join(__dirname, '..', dir);
         if (!fs.existsSync(dirPath)) {
@@ -29,6 +37,12 @@ const storage = multer.diskStorage({
             uploadPath = path.join(uploadPath, 'covers');
         } else if (file.fieldname === 'portfolio') {
             uploadPath = path.join(uploadPath, 'portfolio');
+        } else if (file.fieldname === 'track') {
+            // New handling for audio tracks
+            uploadPath = path.join(uploadPath, 'tracks');
+        } else if (file.fieldname === 'trackCover') {
+            // Cover art for tracks
+            uploadPath = path.join(uploadPath, 'covers');
         }
 
         console.log(`File destination set to: ${uploadPath} for ${file.fieldname}`);
@@ -44,7 +58,7 @@ const storage = multer.diskStorage({
 
 // File filter for different file types
 const fileFilter = (req, file, cb) => {
-    if (file.fieldname === 'avatar' || file.fieldname === 'coverImage') {
+    if (file.fieldname === 'avatar' || file.fieldname === 'coverImage' || file.fieldname === 'trackCover') {
         // Accept images only
         if (!file.mimetype.startsWith('image/')) {
             return cb(new Error('Only image files are allowed!'), false);
@@ -55,6 +69,12 @@ const fileFilter = (req, file, cb) => {
         if (!allowedTypes.some(type => file.mimetype.startsWith(type))) {
             return cb(new Error('Only image, audio, and video files are allowed!'), false);
         }
+    } else if (file.fieldname === 'track') {
+        // Accept only audio files for tracks
+        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/flac'];
+        if (!allowedTypes.includes(file.mimetype)) {
+            return cb(new Error('Only MP3, WAV, OGG and FLAC audio files are allowed!'), false);
+        }
     }
     cb(null, true);
 };
@@ -63,7 +83,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
+        fileSize: 50 * 1024 * 1024 // 30MB limit for audio files
     }
 });
 

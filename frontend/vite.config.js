@@ -10,11 +10,14 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5001',
         changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
       },
       // Proxy requests for static files
       '/uploads': {
         target: 'http://localhost:5001',
         changeOrigin: true,
+        secure: false,
       }
     }
   }
