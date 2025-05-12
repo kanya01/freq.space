@@ -1,129 +1,171 @@
 // frontend/src/features/profile/components/ProfileView.jsx
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../auth/authSlice';
 import ProfileHeader from './ProfileHeader';
 import ProfileAbout from './ProfileAbout';
-import ProfileTracks from './ProfileTracks';
-import ProfilePortfolio from './ProfilePortfolio';
 import ProfileServices from './ProfileServices';
+import ProfilePortfolio from './ProfilePortfolio';
 import ProfileReviews from './ProfileReviews';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const ProfileView = ({ user, isOwnProfile = false }) => {
-    const [activeTab, setActiveTab] = useState('tracks');
     const currentUser = useSelector(selectUser);
-
-    // Only show the upload button if viewing own profile and logged in
+    const [activeSection, setActiveSection] = useState('about');
     const showUploadButton = isOwnProfile && currentUser && currentUser._id === user?._id;
 
+    // Handle section navigation
+    const scrollToSection = (sectionId) => {
+        setActiveSection(sectionId);
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    // Update active section based on scroll position
+    useEffect(() => {
+        const handleScroll = () => {
+            const sections = ['about', 'services', 'portfolio', 'reviews'];
+            const current = sections.find(section => {
+                const element = document.getElementById(section);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    return rect.top <= 100 && rect.bottom >= 100;
+                }
+                return false;
+            });
+
+            if (current) {
+                setActiveSection(current);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
-        <div className="min-h-screen bg-black text-gray-100">
-            <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
+        <div className="min-h-screen bg-black text-white">
+            {/* Elegant Navbar */}
+            <header className="fixed top-0 inset-x-0 bg-black/95 z-50 border-b border-gray-900">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="flex justify-between items-center h-16">
+                        <div className="flex items-center">
+                            <Link to="/" className="text-xl font-medium text-blue-500">
+                                freq.space
+                            </Link>
+                        </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Action buttons for own profile */}
-                {isOwnProfile && (
-                    <div className="mb-6 flex justify-end space-x-4">
-                        <Link
-                            to="/profile/edit"
-                            className="px-4 py-2 bg-white text-black rounded-md hover:bg-gray-200"
-                        >
-                            Edit Profile
-                        </Link>
+                        <nav className="hidden md:flex space-x-8">
+                            <button
+                                onClick={() => scrollToSection('about')}
+                                className={`px-3 py-2 text-sm font-medium ${
+                                    activeSection === 'about'
+                                        ? 'text-white border-b border-blue-500'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                About
+                            </button>
+                            <button
+                                onClick={() => scrollToSection('services')}
+                                className={`px-3 py-2 text-sm font-medium ${
+                                    activeSection === 'services'
+                                        ? 'text-white border-b border-blue-500'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                Services
+                            </button>
+                            <button
+                                onClick={() => scrollToSection('portfolio')}
+                                className={`px-3 py-2 text-sm font-medium ${
+                                    activeSection === 'portfolio'
+                                        ? 'text-white border-b border-blue-500'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                Portfolio
+                            </button>
+                            <button
+                                onClick={() => scrollToSection('reviews')}
+                                className={`px-3 py-2 text-sm font-medium ${
+                                    activeSection === 'reviews'
+                                        ? 'text-white border-b border-blue-500'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                Reviews
+                            </button>
+                        </nav>
 
-                        <Link
-                            to="/upload"
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 inline-flex items-center"
-                        >
-                            <PlusIcon className="h-5 w-5 mr-1" />
-                            Upload Track
-                        </Link>
+                        <div className="flex items-center">
+                            <div className="relative mr-4">
+                                <input
+                                    type="text"
+                                    placeholder="Search"
+                                    className="w-48 bg-gray-900 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            </div>
+
+                            {showUploadButton && (
+                                <Link
+                                    to="/upload"
+                                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded-md"
+                                >
+                                    <PlusIcon className="h-4 w-4 mr-1" />
+                                    Upload Track
+                                </Link>
+                            )}
+                        </div>
                     </div>
-                )}
-
-                {/* Profile navigation tabs */}
-                <div className="border-b border-gray-800 mb-6">
-                    <nav className="flex space-x-8">
-                        <button
-                            onClick={() => setActiveTab('tracks')}
-                            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'tracks'
-                                    ? 'border-blue-500 text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-400 hover:border-gray-300'
-                            }`}
-                        >
-                            Tracks
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('about')}
-                            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'about'
-                                    ? 'border-blue-500 text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-400 hover:border-gray-300'
-                            }`}
-                        >
-                            About
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('portfolio')}
-                            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'portfolio'
-                                    ? 'border-blue-500 text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-400 hover:border-gray-300'
-                            }`}
-                        >
-                            Portfolio
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('services')}
-                            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'services'
-                                    ? 'border-blue-500 text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-400 hover:border-gray-300'
-                            }`}
-                        >
-                            Services
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('reviews')}
-                            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'reviews'
-                                    ? 'border-blue-500 text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-400 hover:border-gray-300'
-                            }`}
-                        >
-                            Reviews
-                        </button>
-                    </nav>
                 </div>
+            </header>
 
-                {/* Tab content */}
-                <div>
-                    {activeTab === 'tracks' && (
-                        <ProfileTracks
-                            userId={user._id}
-                            isOwnProfile={isOwnProfile}
-                            showUploadButton={showUploadButton}
-                        />
-                    )}
+            <div className="pt-24">
+                {/* Main Content Container */}
+                <div className="max-w-6xl mx-auto px-4">
+                    {/* User Profile Header */}
+                    <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
 
-                    {activeTab === 'about' && (
+                    {/* About Section */}
+                    <section id="about" className="mt-16 mb-24">
+                        <h2 className="text-xl font-medium mb-6 pb-1 border-b border-gray-900">About</h2>
                         <ProfileAbout user={user} />
-                    )}
+                    </section>
 
-                    {activeTab === 'portfolio' && (
-                        <ProfilePortfolio user={user} isOwnProfile={isOwnProfile} />
-                    )}
-
-                    {activeTab === 'services' && (
+                    {/* Services Section */}
+                    <section id="services" className="mb-24">
+                        <h2 className="text-xl font-medium mb-6 pb-1 border-b border-gray-900">Services</h2>
                         <ProfileServices user={user} isOwnProfile={isOwnProfile} />
-                    )}
+                    </section>
 
-                    {activeTab === 'reviews' && (
+                    {/* Portfolio Section */}
+                    <section id="portfolio" className="mb-24">
+                        <div className="flex justify-between items-center mb-6 pb-1 border-b border-gray-900">
+                            <h2 className="text-xl font-medium">Portfolio</h2>
+                            {showUploadButton && (
+                                <Link
+                                    to="/upload"
+                                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-md"
+                                >
+                                    <PlusIcon className="h-4 w-4 mr-1" />
+                                    Upload Track
+                                </Link>
+                            )}
+                        </div>
+                        <ProfilePortfolio user={user} isOwnProfile={isOwnProfile} />
+                    </section>
+
+                    {/* Reviews Section */}
+                    <section id="reviews" className="mb-24">
+                        <h2 className="text-xl font-medium mb-6 pb-1 border-b border-gray-900">Reviews</h2>
                         <ProfileReviews user={user} />
-                    )}
+                    </section>
                 </div>
             </div>
         </div>
