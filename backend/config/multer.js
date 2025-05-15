@@ -12,7 +12,8 @@ const createUploadDirs = () => {
         'uploads/covers',
         'uploads/portfolio',
         'uploads/tracks',      // New directory for audio tracks
-        'uploads/waveforms'    // New directory for waveform data
+        'uploads/waveforms',    // New directory for waveform data
+        'uploads/posts' // New directory for post media
     ];
 
     dirs.forEach(dir => {
@@ -43,6 +44,10 @@ const storage = multer.diskStorage({
         } else if (file.fieldname === 'trackCover') {
             // Cover art for tracks
             uploadPath = path.join(uploadPath, 'covers');
+        }
+        else if (file.fieldname.startsWith('media_')) {
+            // Media files for posts
+            uploadPath = path.join(uploadPath, 'posts');
         }
 
         console.log(`File destination set to: ${uploadPath} for ${file.fieldname}`);
