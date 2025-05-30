@@ -34,7 +34,7 @@ const generateWaveformData = async (filePath) => {
 // @access  Private
 exports.uploadTrack = async (req, res) => {
     console.log('Upload track controller called');
-    console.log('Request file:', req.file);
+    console.log('Request file:', req.files);
     console.log('Request body:', req.body);
 
     const errors = validationResult(req);
@@ -44,7 +44,7 @@ exports.uploadTrack = async (req, res) => {
 
     try {
         // Verify file was uploaded - using single not fields
-        if (!req.file) {
+        if (!req.files || !req.files.track) {
             console.error('No file in request');
             return res.status(400).json({ msg: 'No audio file uploaded' });
         }
@@ -52,12 +52,17 @@ exports.uploadTrack = async (req, res) => {
         const { title, description, genre, isPublic } = req.body;
 
         // Get track file info
-        const trackFile = req.file;
+        // const trackFile = req.file;
+        const trackFile = req.files.track[0]; // Use the first file from the array
         const trackUrl = `/uploads/tracks/${trackFile.filename}`;
         const trackPath = path.join(__dirname, '..', trackUrl);
 
         // Get cover image if provided - we'll handle this separately
         let coverUrl = '';
+        if (req.files.trackCover && req.files.trackCover.length > 0) {
+            const coverFile = req.files.trackCover[0];
+            coverUrl = `/uploads/covers/${coverFile.filename}`;
+        }
 
         // Extract audio metadata
         let duration = 0;
@@ -384,7 +389,7 @@ exports.deleteTrack = async (req, res) => {
             await fs.unlink(waveformPath).catch(err => console.error('Error deleting waveform data:', err));
         }
 
-        await track.remove();
+        await Track.deleteOne({ _id: req.params.id });
 
         res.json({ msg: 'Track deleted' });
     } catch (error) {

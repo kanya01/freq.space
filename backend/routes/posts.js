@@ -18,6 +18,12 @@ const postValidation = [
 const commentValidation = [
     body('text', 'Text is required').not().isEmpty().trim()
 ];
+// Route for testing file uploads - for debugging only
+router.use((req, res, next) => {
+    console.log(`Post Route Request: ${req.method} ${req.originalUrl}`);
+    console.log('Headers:', req.headers['content-type']);
+    next();
+});
 
 // Create post
 router.post('/',

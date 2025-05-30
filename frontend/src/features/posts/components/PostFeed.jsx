@@ -1,4 +1,3 @@
-// frontend/src/features/posts/components/PostFeed.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -19,6 +18,13 @@ const PostFeed = ({ userId = null, showPostForm = true }) => {
     const error = useSelector(selectPostsError);
     const { currentPage, totalPages } = useSelector(selectPostsPagination);
     const currentUser = useSelector(selectUser);
+    const [isFormVisible, setIsFormVisible] = useState(false);
+
+    // Check if we should show the form based on props and auth
+    useEffect(() => {
+        // Make form visible if showPostForm is true and user is logged in
+        setIsFormVisible(showPostForm && !!currentUser);
+    }, [showPostForm, currentUser]);
 
     // Initial load
     useEffect(() => {
@@ -27,7 +33,7 @@ const PostFeed = ({ userId = null, showPostForm = true }) => {
 
     // Handle loading more posts
     const handleLoadMore = () => {
-        if (currentPage < totalPages) {
+        if (currentPage < totalPages && !isLoading) {
             dispatch(fetchPosts({
                 page: currentPage + 1,
                 userId
@@ -35,16 +41,20 @@ const PostFeed = ({ userId = null, showPostForm = true }) => {
         }
     };
 
-    // Handle post success
-    const handlePostSuccess = () => {
-        // Optionally, you could refetch posts here, but the Redux state
-        // is already updated by the createPost thunk
+    // Handle post success - explicitly refetch posts
+    const handlePostSuccess = (newPost) => {
+        console.log('Post created successfully, refreshing feed', newPost);
+        // Explicitly refetch the first page to ensure UI is up to date
+        dispatch(fetchPosts({
+            page: 1,
+            userId
+        }));
     };
 
     return (
         <div className="post-feed">
-            {/* Post form - only show if requested and user is logged in */}
-            {showPostForm && currentUser && (
+            {/* Post form - only show if we determined it should be visible */}
+            {isFormVisible && (
                 <PostForm onSuccess={handlePostSuccess} />
             )}
 

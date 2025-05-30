@@ -1,4 +1,3 @@
-// frontend/src/features/posts/components/PostForm.jsx
 import React, { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createPost, clearPostsError, selectPostsLoading, selectPostsError } from '../postsSlice';
@@ -17,6 +16,7 @@ const PostForm = ({ onSuccess }) => {
     const [mediaPreviews, setMediaPreviews] = useState([]);
     const [isPublic, setIsPublic] = useState(true);
     const [validationError, setValidationError] = useState('');
+    const [submissionError, setSubmissionError] = useState('');
 
     const fileInputRef = useRef(null);
     const dispatch = useDispatch();
@@ -81,44 +81,61 @@ const PostForm = ({ onSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Clear previous errors
+        setValidationError('');
+        setSubmissionError('');
+        dispatch(clearPostsError());
+
         if (!content.trim() && mediaFiles.length === 0) {
             setValidationError('Please add some text or media to your post.');
             return;
         }
 
-        dispatch(clearPostsError());
-
+        // Create FormData object
         const formData = new FormData();
         formData.append('content', content);
-        formData.append('isPublic', isPublic);
+        formData.append('isPublic', isPublic.toString());
 
+        // Important: Append each file with the same key 'media'
+        // This matches what the backend expects
         mediaFiles.forEach(file => {
             formData.append('media', file);
         });
 
         try {
+            console.log('Submitting post with content:', content);
+            console.log('Files being uploaded:', mediaFiles.map(f => f.name));
+
             const resultAction = await dispatch(createPost(formData));
 
             if (createPost.fulfilled.match(resultAction)) {
+                console.log('Post created successfully:', resultAction.payload);
+
                 // Reset form on success
                 setContent('');
                 setMediaFiles([]);
                 setMediaPreviews([]);
 
                 // Callback
-                if (onSuccess) onSuccess(resultAction.payload);
+                if (onSuccess) {
+                    onSuccess(resultAction.payload);
+                }
+            } else if (createPost.rejected.match(resultAction)) {
+                console.error('Failed to create post:', resultAction.payload);
+                setSubmissionError(resultAction.payload || 'Failed to create post. Please try again.');
             }
         } catch (err) {
-            console.error('Post creation failed:', err);
+            console.error('Post creation error:', err);
+            setSubmissionError(err.message || 'An unexpected error occurred.');
         }
     };
 
     return (
         <div className="bg-gray-900 rounded-lg p-4 mb-6">
             {/* Error display */}
-            {(validationError || apiError) && (
+            {(validationError || apiError || submissionError) && (
                 <div className="mb-4 p-3 bg-red-900/50 rounded-md">
-                    <p className="text-red-200 text-sm">{validationError || apiError}</p>
+                    <p className="text-red-200 text-sm">{validationError || apiError || submissionError}</p>
                 </div>
             )}
 
