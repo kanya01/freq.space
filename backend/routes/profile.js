@@ -28,4 +28,6 @@ router.delete('/portfolio/:itemId',
     profileController.deletePortfolioItem
 );
 
+router.get('/featured', profileController.getFeaturedProfiles);
+
 module.exports = router;

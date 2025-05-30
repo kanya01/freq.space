@@ -50,16 +50,39 @@ export const createPost = createAsyncThunk(
     'posts/createPost',
     async (formData, thunkAPI) => {
         try {
+            console.log('Creating post with FormData:',
+                Array.from(formData.entries()).map(([key, val]) =>
+                    `${key}: ${val instanceof File ? `File: ${val.name} (${val.type})` : val}`
+                ).join(', ')
+            );
+
             const response = await api.post('/api/v1/posts', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    // Let the browser set the content type with boundary for multipart/form-data
+                    // Don't explicitly set Content-Type here as it will interfere with file uploads
                 }
             });
+
+            console.log('Post created successfully:', response.data);
             return response.data;
         } catch (error) {
-            console.error('Create post error:', error.response?.data || error);
-            const message = error.response?.data?.message || error.message || 'Failed to create post';
-            return thunkAPI.rejectWithValue(message);
+            console.error('Create post error details:', error);
+
+            // Better error extraction
+            let errorMessage;
+            if (error.response?.data?.msg) {
+                errorMessage = error.response.data.msg;
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.data?.errors?.[0]?.msg) {
+                errorMessage = error.response.data.errors[0].msg;
+            } else if (error.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = 'Failed to create post';
+            }
+
+            return thunkAPI.rejectWithValue(errorMessage);
         }
     }
 );

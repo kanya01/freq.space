@@ -128,3 +128,24 @@ exports.deletePortfolioItem = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+exports.getFeaturedProfiles = async (req, res) => {
+    try {
+        const featuredUsers = await User.find({
+            'profile.onboardingCompleted': true,
+            'profile.userType': { $exists: true, $ne: null }
+        })
+            .select('username profile.avatarUrl profile.userType profile.experienceLevel profile.skills')
+            // .sort({ createdAt: -1 })
+            .limit(10);
+
+        // if (featuredUsers.length === 0) {
+        //     return res.status(404).json({ message: 'No featured profiles found' });
+        // }
+
+        res.json(featuredUsers);
+    } catch (error) {
+        console.error('Get featured profiles error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
