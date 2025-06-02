@@ -4,7 +4,8 @@ const profileController = require('../controllers/profileController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const upload = require('../config/multer');
 
-
+router.get('/search', profileController.searchProfiles);
+router.get('/suggestions', profileController.getSearchSuggestions);
 router.get('/featured', profileController.getFeaturedProfiles);
 // Public profile routes
 router.get('/:username', profileController.getPublicProfile);
