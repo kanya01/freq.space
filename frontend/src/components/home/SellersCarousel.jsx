@@ -7,6 +7,7 @@ import api from '../../services/api';
 const SellersCarousel = () => {
     const [sellers, setSellers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
     const scrollContainerRef = React.useRef(null);
@@ -17,10 +18,19 @@ const SellersCarousel = () => {
 
     const fetchFeaturedSellers = async () => {
         try {
+            setError(null);
             const response = await api.get('/api/v1/profile/featured');
-            setSellers(response.data || []);
+
+            // Ensure we have an array of sellers
+            if (Array.isArray(response.data)) {
+                setSellers(response.data);
+            } else {
+                console.error('Unexpected response format:', response.data);
+                setSellers([]);
+            }
         } catch (error) {
             console.error('Error fetching sellers:', error);
+            setError(error.response?.data?.message || 'Failed to load featured sellers');
             setSellers([]);
         } finally {
             setLoading(false);
@@ -68,7 +78,7 @@ const SellersCarousel = () => {
 
                 <div className="relative">
                     {/* Scroll buttons */}
-                    {canScrollLeft && (
+                    {canScrollLeft && sellers.length > 0 && (
                         <button
                             onClick={() => scroll('left')}
                             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-floral-white shadow-lg rounded-full p-2 hover:bg-timberwolf-100 transition-colors duration-200"
@@ -77,7 +87,7 @@ const SellersCarousel = () => {
                         </button>
                     )}
 
-                    {canScrollRight && (
+                    {canScrollRight && sellers.length > 0 && (
                         <button
                             onClick={() => scroll('right')}
                             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-floral-white shadow-lg rounded-full p-2 hover:bg-timberwolf-100 transition-colors duration-200"
@@ -98,13 +108,28 @@ const SellersCarousel = () => {
                             [...Array(4)].map((_, i) => (
                                 <div key={i} className="min-w-[280px] h-32 bg-timberwolf-200 rounded-lg animate-pulse" />
                             ))
+                        ) : error ? (
+                            <div className="text-center py-8 text-red-600 w-full">
+                                {error}
+                            </div>
                         ) : sellers.length > 0 ? (
-                            sellers.map(seller => (
-                                <SellerCard key={seller._id} seller={seller} />
-                            ))
+                            sellers.map((seller, index) => {
+                                // Log to debug
+                                console.log(`Seller ${index}:`, seller);
+
+                                return seller ? (
+                                    <SellerCard key={seller._id || index} seller={seller} />
+                                ) : null;
+                            })
                         ) : (
                             <div className="text-center py-8 text-black-olive-600 w-full">
-                                No featured sellers at the moment
+                                <p className="mb-4">No featured sellers at the moment</p>
+                                <Link
+                                    to="/register"
+                                    className="text-flame hover:text-flame-600 font-medium"
+                                >
+                                    Be the first to join →
+                                </Link>
                             </div>
                         )}
                     </div>

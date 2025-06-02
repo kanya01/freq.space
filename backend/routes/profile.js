@@ -4,6 +4,8 @@ const profileController = require('../controllers/profileController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const upload = require('../config/multer');
 
+
+router.get('/featured', profileController.getFeaturedProfiles);
 // Public profile routes
 router.get('/:username', profileController.getPublicProfile);
 
@@ -28,6 +30,6 @@ router.delete('/portfolio/:itemId',
     profileController.deletePortfolioItem
 );
 
-router.get('/featured', profileController.getFeaturedProfiles);
+
 
 module.exports = router;
