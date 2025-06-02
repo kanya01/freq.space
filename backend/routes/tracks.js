@@ -47,7 +47,11 @@ router.post('/test-upload',
 router.post('/',
     authenticateToken,
     // IMPORTANT: Use single for the main track file, not fields
-    upload.single('track'),
+    // upload.single('track'),
+    upload.fields([
+        { name: 'track', maxCount: 1 },
+        { name: 'trackCover', maxCount: 1 }
+    ]),
     trackValidation,
     trackController.uploadTrack
 );

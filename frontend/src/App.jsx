@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loadUser } from './features/auth/authSlice';
+import Layout from './components/layout/Layout';
 import OnboardingFlow from './features/onboarding/OnboardingFlow';
 
 // Pages
@@ -29,29 +30,61 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* Public Routes */}
+                {/* Public Routes - No layout */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/u/:username" element={<PublicProfilePage />} />
-                <Route path="/tracks/:id" element={<TrackDetailPage />} />
+
+                {/* Public Routes - With layout */}
+                <Route path="/tracks/:id" element={
+                    <Layout>
+                        <TrackDetailPage />
+                    </Layout>
+                } />
+                <Route path="/u/:username" element={
+                    <Layout>
+                        <PublicProfilePage />
+                    </Layout>
+                } />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/" element={
+                        <HomePage />
+                    } />
+                    <Route path="/profile" element={
+                        <Layout>
+                            <ProfilePage />
+                        </Layout>
+                    } />
                     <Route path="/onboarding" element={<OnboardingFlow />} />
-                    <Route path="/profile/edit" element={<EditProfilePage />} />
-                    <Route path="/upload" element={<UploadTrackPage />} />
-                    <Route path="/tracks/:id/edit" element={<UploadTrackPage />} />
+                    <Route path="/profile/edit" element={
+                        <Layout>
+                            <EditProfilePage />
+                        </Layout>
+                    } />
+                    <Route path="/upload" element={
+                        <Layout>
+                            <UploadTrackPage />
+                        </Layout>
+                    } />
+                    <Route path="/tracks/:id/edit" element={
+                        <Layout>
+                            <UploadTrackPage />
+                        </Layout>
+                    } />
                 </Route>
 
                 {/* 404 Not Found */}
-                <Route path="*" element={<div className="text-white min-h-screen bg-black flex items-center justify-center">
-                    <div className="text-center">
-                        <h1 className="text-4xl font-bold mb-4">404</h1>
-                        <p className="text-xl">Page not found</p>
-                    </div>
-                </div>} />
+                <Route path="*" element={
+                    <Layout>
+                        <div className="flex items-center justify-center min-h-screen">
+                            <div className="text-center">
+                                <h1 className="text-4xl font-bold mb-4">404</h1>
+                                <p className="text-xl">Page not found</p>
+                            </div>
+                        </div>
+                    </Layout>
+                } />
             </Routes>
         </Router>
     );
