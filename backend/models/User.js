@@ -85,6 +85,29 @@ const userSchema = new Schema({
     following: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 
+userSchema.index({
+    'username': 'text',
+    'profile.bio': 'text',
+    'profile.skills': 'text',
+    'profile.firstName': 'text',
+    'profile.lastName': 'text'
+}, {
+    weights: {
+        'username': 10,
+        'profile.skills': 8,
+        'profile.firstName': 5,
+        'profile.lastName': 5,
+        'profile.bio': 1
+    },
+    name: 'user_search_index'
+});
+
+// Compound indexes for filtering
+userSchema.index({ 'profile.userType': 1, 'profile.onboardingCompleted': 1 });
+userSchema.index({ 'profile.experienceLevel': 1, 'profile.onboardingCompleted': 1 });
+userSchema.index({ 'profile.location.country': 1, 'profile.location.city': 1 });
+userSchema.index({ 'profile.skills': 1, 'profile.onboardingCompleted': 1 });
+
 // --- Password Hashing Middleware ---
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();

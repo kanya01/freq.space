@@ -13,6 +13,7 @@ import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
+import SellersPage from './pages/SellersPage';
 import TrackDetailPage from './pages/TrackDetailPage';
 import UploadTrackPage from './pages/UploadTrackPage';
 
@@ -44,6 +45,9 @@ function App() {
                     <Layout>
                         <PublicProfilePage />
                     </Layout>
+                } />
+                <Route path="/sellers" element={
+                    <SellersPage />
                 } />
 
                 {/* Protected Routes */}
