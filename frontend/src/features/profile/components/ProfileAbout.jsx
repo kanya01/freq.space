@@ -74,10 +74,10 @@ const ProfileAbout = ({ user, isOwnProfile = false }) => {
             </div>
 
             {/* Post Feed */}
-            <div className="mt-8">
-                <h3 className="text-lg font-medium mb-4">Posts</h3>
-                <PostFeed userId={user._id} showPostForm={isOwnProfile} />
-            </div>
+            {/*<div className="mt-8">*/}
+            {/*    <h3 className="text-lg font-medium mb-4">Posts</h3>*/}
+            {/*    <PostFeed userId={user._id} showPostForm={isOwnProfile} />*/}
+            {/*</div>*/}
         </div>
     );
 };

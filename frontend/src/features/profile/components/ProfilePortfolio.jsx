@@ -47,17 +47,17 @@ const ProfilePortfolio = ({ user, isOwnProfile = false }) => {
     return (
         <div>
             {/* Upload Button (only shown if viewing own profile) */}
-            {showUploadButton && (
-                <div className="mb-4 flex justify-end">
-                    <Link
-                        to="/upload"
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Upload Content
-                    </Link>
-                </div>
-            )}
+            {/*{showUploadButton && (*/}
+            {/*    <div className="mb-4 flex justify-end">*/}
+            {/*        <Link*/}
+            {/*            to="/upload"*/}
+            {/*            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"*/}
+            {/*        >*/}
+            {/*            <PlusIcon className="h-5 w-5 mr-2" />*/}
+            {/*            Upload Content*/}
+            {/*        </Link>*/}
+            {/*    </div>*/}
+            {/*)}*/}
 
             {/* Use our wrapped component that preserves all functionality */}
             <CompactTrackFeed userId={user?._id} />

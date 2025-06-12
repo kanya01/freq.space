@@ -154,7 +154,7 @@ const ProfileView = ({ user, isOwnProfile = false }) => {
                                     className="flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-md"
                                 >
                                     <PlusIcon className="h-4 w-4 mr-1" />
-                                    Upload Track
+                                    Upload Content
                                 </Link>
                             )}
                         </div>
