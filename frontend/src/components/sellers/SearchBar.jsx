@@ -177,10 +177,10 @@ const SearchBar = ({ onSearch, initialValues = {} }) => {
         <div className="relative" ref={suggestionsRef}>
             <form onSubmit={handleSubmit}>
                 <div className="relative group">
-                    {/* Main search input */}
-                    <div className="relative bg-white rounded-2xl shadow-lg border border-timberwolf-300 group-focus-within:border-flame-400 group-focus-within:shadow-xl transition-all duration-300">
-                        <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                            <MagnifyingGlassIcon className="h-6 w-6 text-black-olive-600 group-focus-within:text-flame-600 transition-colors" />
+                    {/* Main search input - Made more compact */}
+                    <div className="relative bg-white rounded-xl shadow-lg border border-timberwolf-300 group-focus-within:border-flame-400 group-focus-within:shadow-xl transition-all duration-300">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <MagnifyingGlassIcon className="h-5 w-5 text-black-olive-600 group-focus-within:text-flame-600 transition-colors" />
                         </div>
 
                         <input
@@ -193,39 +193,39 @@ const SearchBar = ({ onSearch, initialValues = {} }) => {
                                 if (suggestions.length > 0) setShowSuggestions(true);
                             }}
                             placeholder="Search for skills, professionals, or locations..."
-                            className="block w-full pl-16 pr-16 py-5 bg-transparent text-lg text-eerie-black placeholder-black-olive-500 focus:outline-none rounded-2xl"
+                            className="block w-full pl-12 pr-12 py-4 bg-transparent text-base text-eerie-black placeholder-black-olive-500 focus:outline-none rounded-xl"
                         />
 
                         {query && (
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="absolute inset-y-0 right-0 pr-6 flex items-center group/clear"
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center group/clear"
                             >
-                                <XMarkIcon className="h-5 w-5 text-black-olive-500 group-hover/clear:text-eerie-black transition-colors" />
+                                <XMarkIcon className="h-4 w-4 text-black-olive-500 group-hover/clear:text-eerie-black transition-colors" />
                             </button>
                         )}
 
                         {/* Loading indicator */}
                         {loading && (
-                            <div className="absolute inset-y-0 right-0 pr-16 flex items-center">
-                                <SparklesIcon className="h-5 w-5 text-flame-500 animate-pulse" />
+                            <div className="absolute inset-y-0 right-0 pr-12 flex items-center">
+                                <SparklesIcon className="h-4 w-4 text-flame-500 animate-pulse" />
                             </div>
                         )}
                     </div>
 
-                    {/* Search hint */}
-                    <p className="mt-3 text-center text-sm text-black-olive-500">
-                        Try searching for "music producer", "Los Angeles", or "mixing"
+                    {/* Search hint - Made more compact */}
+                    <p className="mt-2 text-center text-xs text-black-olive-500">
+                        Try "music producer", "Los Angeles", or "mixing"
                     </p>
                 </div>
             </form>
 
-            {/* Suggestions Dropdown */}
+            {/* Suggestions Dropdown - More compact */}
             {showSuggestions && (suggestions.length > 0 || loading) && (
-                <div className="absolute z-50 w-full mt-2 bg-white border border-timberwolf-200 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+                <div className="absolute z-50 w-full mt-2 bg-white border border-timberwolf-200 rounded-xl shadow-2xl max-h-72 overflow-y-auto">
                     {loading && suggestions.length === 0 && (
-                        <div className="px-6 py-4 text-black-olive-500 text-sm flex items-center">
+                        <div className="px-4 py-3 text-black-olive-500 text-sm flex items-center">
                             <SparklesIcon className="h-4 w-4 mr-2 animate-pulse" />
                             Finding perfect matches...
                         </div>
@@ -233,7 +233,7 @@ const SearchBar = ({ onSearch, initialValues = {} }) => {
 
                     {suggestions.length > 0 && (
                         <div className="py-2">
-                            <div className="px-4 py-2 text-xs font-medium text-black-olive-600 uppercase tracking-wide">
+                            <div className="px-3 py-1.5 text-xs font-medium text-black-olive-600 uppercase tracking-wide">
                                 Suggestions
                             </div>
                             {suggestions.map((suggestion, index) => (
@@ -241,26 +241,26 @@ const SearchBar = ({ onSearch, initialValues = {} }) => {
                                     key={`${suggestion.type}-${suggestion.value}`}
                                     type="button"
                                     onClick={() => handleSuggestionClick(suggestion)}
-                                    className={`w-full px-6 py-4 text-left hover:bg-timberwolf-100 focus:bg-timberwolf-100 focus:outline-none transition-colors border-l-4 border-transparent hover:border-flame-400 ${
+                                    className={`w-full px-4 py-3 text-left hover:bg-timberwolf-100 focus:bg-timberwolf-100 focus:outline-none transition-colors border-l-4 border-transparent hover:border-flame-400 ${
                                         index === selectedSuggestionIndex ? 'bg-timberwolf-100 border-flame-400' : ''
                                     }`}
                                 >
-                                    <div className="flex items-center space-x-4">
-                                        <div className="flex-shrink-0 w-10 h-10 bg-timberwolf-200 rounded-full flex items-center justify-center">
-                                            <span className="text-lg">{getSuggestionIcon(suggestion.type)}</span>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex-shrink-0 w-8 h-8 bg-timberwolf-200 rounded-full flex items-center justify-center">
+                                            <span className="text-sm">{getSuggestionIcon(suggestion.type)}</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-eerie-black font-medium truncate">
+                                            <p className="text-eerie-black font-medium truncate text-sm">
                                                 {suggestion.label}
                                             </p>
-                                            <div className="flex items-center space-x-3 mt-1">
-                                                <span className="text-black-olive-600 text-sm">
+                                            <div className="flex items-center space-x-3 mt-0.5">
+                                                <span className="text-black-olive-600 text-xs">
                                                     {getSuggestionTypeLabel(suggestion.type)}
                                                 </span>
                                                 {suggestion.count && (
                                                     <>
                                                         <span className="text-black-olive-400">•</span>
-                                                        <span className="text-flame-600 text-sm font-medium">
+                                                        <span className="text-flame-600 text-xs font-medium">
                                                             {suggestion.count} professionals
                                                         </span>
                                                     </>
