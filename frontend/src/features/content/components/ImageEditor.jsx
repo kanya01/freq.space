@@ -82,7 +82,7 @@ const ImageEditor = ({ imageUrl, onSave, onClose }) => {
                                 min="0"
                                 max="200"
                                 value={brightness}
-                                onChange={(e) => setBrightness(e.target.value)}
+                                onChange={(e) => setBrightness(Number(e.target.value))}
                                 className="w-full accent-flame-600"
                             />
                         </div>
