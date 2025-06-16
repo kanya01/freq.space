@@ -19,7 +19,7 @@ export const uploadContent = createAsyncThunk(
                 },
                 onUploadProgress: (progressEvent) => {
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    // Dispatch progress update
+                    dispatch(setUploadProgress(progress));
                 }
             });
             return response.data;
