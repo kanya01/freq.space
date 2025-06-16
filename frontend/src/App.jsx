@@ -15,7 +15,7 @@ import PublicProfilePage from './pages/PublicProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
 import SellersPage from './pages/SellersPage';
 import TrackDetailPage from './pages/TrackDetailPage';
-import UploadTrackPage from './pages/UploadTrackPage';
+import UploadContentPage from './pages/UploadContentPage';
 
 // Components
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -68,12 +68,12 @@ function App() {
                     } />
                     <Route path="/upload" element={
                         <Layout>
-                            <UploadTrackPage />
+                            <UploadContentPage />
                         </Layout>
                     } />
                     <Route path="/tracks/:id/edit" element={
                         <Layout>
-                            <UploadTrackPage />
+                            <UploadContentPage />
                         </Layout>
                     } />
                 </Route>

@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const passport = require('passport'); // Import passport
 const onboardingRoutes = require('./routes/onboarding'); // Import onboarding routes
 const profileRoutes = require('./routes/profile');
+const contentRoutes = require('./routes/content');
 const trackRoutes = require('./routes/tracks'); // Import track routes
 const postRoutes = require('./routes/posts');
 // const initializeSocket = require('./config/socket'); // We'll create this later
@@ -27,6 +28,7 @@ const uploadDirs = [
     'uploads/covers',
     'uploads/portfolio',
     'uploads/tracks',    // New directory for tracks
+    'uploads/content',
     'uploads/waveforms',
     'uploads/posts'// New directory for waveform data
 ];
@@ -73,6 +75,7 @@ app.get('/', (req, res) => res.send('API Running')); // Keep basic test route
 app.use('/api/v1/auth', authRoutes); // Use auth routes
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/profile', profileRoutes);
+app.use('/api/v1/content', contentRoutes);
 app.use('/api/v1/tracks', trackRoutes); // Add tracks routes
 app.use('/api/v1/posts', postRoutes);
 
