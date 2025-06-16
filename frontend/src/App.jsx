@@ -42,9 +42,9 @@ function App() {
                     </Layout>
                 } />
                 <Route path="/u/:username" element={
-                    <Layout>
+
                         <PublicProfilePage />
-                    </Layout>
+
                 } />
                 <Route path="/sellers" element={
                     <SellersPage />
@@ -56,9 +56,9 @@ function App() {
                         <HomePage />
                     } />
                     <Route path="/profile" element={
-                        <Layout>
+
                             <ProfilePage />
-                        </Layout>
+
                     } />
                     <Route path="/onboarding" element={<OnboardingFlow />} />
                     <Route path="/profile/edit" element={
