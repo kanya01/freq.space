@@ -8,6 +8,7 @@ const fs = require('fs');
 const createUploadDirs = () => {
     const dirs = [
         'uploads',
+        'uploads/content',
         'uploads/avatars',
         'uploads/covers',
         'uploads/portfolio',
@@ -47,7 +48,7 @@ const storage = multer.diskStorage({
         }
         else if (file.fieldname.startsWith('media_')) {
             // Media files for posts
-            uploadPath = path.join(uploadPath, 'posts');
+            uploadPath = path.join(uploadPath, 'content');
         }
 
         console.log(`File destination set to: ${uploadPath} for ${file.fieldname}`);
@@ -74,11 +75,15 @@ const fileFilter = (req, file, cb) => {
         if (!allowedTypes.some(type => file.mimetype.startsWith(type))) {
             return cb(new Error('Only image, audio, and video files are allowed!'), false);
         }
-    } else if (file.fieldname === 'track') {
+    } else if (file.fieldname === 'media') {
         // Accept only audio files for tracks
-        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/flac'];
+        const allowedTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/flac',
+            'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
+        ];
         if (!allowedTypes.includes(file.mimetype)) {
-            return cb(new Error('Only MP3, WAV, OGG and FLAC audio files are allowed!'), false);
+            return cb(new Error('Invalid file type!'), false);
         }
     }
     cb(null, true);
