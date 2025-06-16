@@ -15,7 +15,7 @@ import PublicProfilePage from './pages/PublicProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
 import SellersPage from './pages/SellersPage';
 import TrackDetailPage from './pages/TrackDetailPage';
-import UploadContentPage from './pages/UploadContentPage.jsx';
+import UploadContentPage from './pages/UploadContentPage';
 
 // Components
 import ProtectedRoute from './components/common/ProtectedRoute';
