@@ -425,5 +425,78 @@ exports.addComment = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+// Add method to get user's content organized by type
+exports.getUserPortfolio = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { mediaType, limit = 10, offset = 0 } = req.query;
+
+        const query = {
+            user: userId,
+            isPublic: true // Only show public content in portfolio
+        };
+
+        if (mediaType) {
+            query.mediaType = mediaType;
+        }
+
+        const content = await Content.find(query)
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .skip(parseInt(offset))
+            .populate('user', 'username profile.avatarUrl');
+
+        const grouped = {
+            images: [],
+            videos: [],
+            audio: []
+        };
+
+        content.forEach(item => {
+            switch(item.mediaType) {
+                case 'image':
+                    grouped.images.push(item);
+                    break;
+                case 'video':
+                    grouped.videos.push(item);
+                    break;
+                case 'audio':
+                    grouped.audio.push(item);
+                    break;
+            }
+        });
+
+        res.json({
+            content: grouped,
+            total: await Content.countDocuments(query)
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Add featured content support
+exports.setFeaturedContent = async (req, res) => {
+    try {
+        const { contentId } = req.params;
+        const { isFeatured } = req.body;
+
+        const content = await Content.findById(contentId);
+        if (!content) {
+            return res.status(404).json({ message: 'Content not found' });
+        }
+
+        if (content.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        content.isFeatured = isFeatured;
+        await content.save();
+
+        res.json(content);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 // Add other controller methods (getContent, getContentById, etc.)
 // Similar to the track controller but adapted for the unified content model

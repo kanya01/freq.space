@@ -83,7 +83,7 @@ const ProfileView = ({ user, isOwnProfile = false }) => {
                                         </Link>
                                     )}
                                 </div>
-                                <ProfilePortfolio user={user} isOwnProfile={isOwnProfile} />
+                                <ProfilePortfolio userId={user.userId} isOwnProfile={isOwnProfile} />
                             </div>
 
                             {/* Reviews Section */}
