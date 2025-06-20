@@ -55,5 +55,11 @@ router.delete('/:id',
     authenticateToken,
     contentController.deleteContent
 );
+router.get('/user/:userId/portfolio', contentController.getUserPortfolio);
 
+// Set featured content
+router.put('/:contentId/featured',
+    authenticateToken,
+    contentController.setFeaturedContent
+);
 module.exports = router;
