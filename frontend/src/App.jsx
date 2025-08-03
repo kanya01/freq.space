@@ -67,14 +67,10 @@ function App() {
                         </Layout>
                     } />
                     <Route path="/upload" element={
-                        <Layout>
                             <UploadContentPage />
-                        </Layout>
                     } />
                     <Route path="/tracks/:id/edit" element={
-                        <Layout>
                             <UploadContentPage />
-                        </Layout>
                     } />
                 </Route>
 

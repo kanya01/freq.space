@@ -427,51 +427,75 @@ exports.addComment = async (req, res) => {
 };
 // Add method to get user's content organized by type
 exports.getUserPortfolio = async (req, res) => {
+    const { userId } = req.params;
+    const { mediaType, limit = 50, offset = 0 } = req.query;
+
+    console.log('[ContentController] getUserPortfolio called:', {
+        userId,
+        mediaType,
+        limit,
+        offset,
+        timestamp: new Date().toISOString()
+    });
+
     try {
-        const { userId } = req.params;
-        const { mediaType, limit = 10, offset = 0 } = req.query;
-
-        const query = {
-            user: userId,
-            isPublic: true // Only show public content in portfolio
-        };
-
+        // Build query
+        let query = { user: userId };
         if (mediaType) {
             query.mediaType = mediaType;
         }
 
-        const content = await Content.find(query)
-            .sort({ createdAt: -1 })
-            .limit(parseInt(limit))
-            .skip(parseInt(offset))
-            .populate('user', 'username profile.avatarUrl');
+        console.log('[ContentController] Database query:', query);
 
+        // Execute queries
+        const [content, total] = await Promise.all([
+            Content.find(query)
+                .sort({ createdAt: -1 })
+                .limit(parseInt(limit))
+                .skip(parseInt(offset))
+                .populate('user', 'username profile.avatarUrl'),
+            Content.countDocuments(query)
+        ]);
+
+        console.log('[ContentController] Database results:', {
+            contentFound: content.length,
+            totalCount: total
+        });
+
+        // Group by media type
         const grouped = {
-            images: [],
-            videos: [],
-            audio: []
+            images: content.filter(item => item.mediaType === 'image'),
+            videos: content.filter(item => item.mediaType === 'video'),
+            audio: content.filter(item => item.mediaType === 'audio')
         };
 
-        content.forEach(item => {
-            switch(item.mediaType) {
-                case 'image':
-                    grouped.images.push(item);
-                    break;
-                case 'video':
-                    grouped.videos.push(item);
-                    break;
-                case 'audio':
-                    grouped.audio.push(item);
-                    break;
-            }
+        console.log('[ContentController] Grouped content:', {
+            images: grouped.images.length,
+            videos: grouped.videos.length,
+            audio: grouped.audio.length
         });
 
-        res.json({
+        const response = {
             content: grouped,
-            total: await Content.countDocuments(query)
-        });
+            total,
+            page: Math.floor(offset / limit) + 1,
+            pages: Math.ceil(total / limit)
+        };
+
+        console.log('[ContentController] Sending response for userId:', userId);
+        res.json(response);
+
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('[ContentController] Error in getUserPortfolio:', {
+            error: error.message,
+            stack: error.stack,
+            userId
+        });
+
+        res.status(500).json({
+            message: 'Error fetching portfolio content',
+            error: error.message
+        });
     }
 };
 

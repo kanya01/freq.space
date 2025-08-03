@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import api from '../../../services/api';
+import { uploadContent } from '../contentSlice';
 import {
     CloudArrowUpIcon,
     PhotoIcon,
@@ -22,14 +24,18 @@ const ContentUpload = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
+    // const { isUploading, uploadProgress } = useSelector((state) => state.content);
+    const { loading: isUploading, uploadProgress, error } = useSelector((state) => state.content);
+
+
     // State management
     const [selectedType, setSelectedType] = useState(null);
     const [file, setFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
     const [coverFile, setCoverFile] = useState(null);
     const [coverPreview, setCoverPreview] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
+
+
     const [validationError, setValidationError] = useState('');
     const [showImageEditor, setShowImageEditor] = useState(false);
     const [editedImage, setEditedImage] = useState(null);
@@ -235,6 +241,14 @@ const ContentUpload = () => {
     // Form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('[ContentUpload] Form submission started');
+
+        console.log('[ContentUpload] File details:', {
+            file: file,
+            fileName: file?.name,
+            fileSize: file?.size,
+            fileType: file?.type
+        });
 
         if (!file) {
             setValidationError('Please select a file to upload');
@@ -246,17 +260,19 @@ const ContentUpload = () => {
             return;
         }
 
-        setIsUploading(true);
-        setUploadProgress(0);
+        // setIsUploading(true);
+        // setUploadProgress(0);
 
         try {
             const uploadData = new FormData();
-            uploadData.append('media', editedImage || file);
+            uploadData.append('media', file);
             uploadData.append('title', formData.title);
             uploadData.append('description', formData.description);
             uploadData.append('mediaType', selectedType);
             uploadData.append('tags', JSON.stringify(formData.tags));
-            uploadData.append('isPublic', formData.isPublic);
+            uploadData.append('isPublic', formData.isPublic.toString());
+
+            console.log('[ContentUpload] FormData prepared, starting upload...');
 
             // Add type-specific fields
             if (selectedType === 'audio' && formData.genre) {
@@ -271,36 +287,26 @@ const ContentUpload = () => {
                 uploadData.append('cover', coverFile);
             }
 
-            // Simulate upload progress
-            const progressInterval = setInterval(() => {
-                setUploadProgress(prev => {
-                    if (prev >= 90) {
-                        clearInterval(progressInterval);
-                        return prev;
-                    }
-                    return prev + 10;
-                });
-            }, 300);
+            // REMOVE THE DIRECT API CALL - Only use Redux action
+            const result = await dispatch(uploadContent(uploadData)).unwrap();
+            console.log('[ContentUpload] Upload successful:', result);
 
-            // API call would go here
-            // const response = await api.post('/api/v1/content', uploadData);
-
-            // For now, simulate success
+            // Navigate to profile after successful upload
             setTimeout(() => {
-                clearInterval(progressInterval);
-                setUploadProgress(100);
-                setTimeout(() => {
-                    navigate('/profile');
-                }, 500);
-            }, 3000);
+                navigate('/profile');
+            }, 500);
 
         } catch (error) {
-            console.error('Upload error:', error);
-            setValidationError('Failed to upload content. Please try again.');
-            setIsUploading(false);
+            console.error('[ContentUpload] Upload failed:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+
+            setValidationError(error.response?.data?.message || 'Failed to upload content. Please try again.');
+            // setIsUploading(false);
         }
     };
-
     const genreOptions = [
         'Alternative', 'Ambient', 'Blues', 'Classical', 'Country',
         'Dance', 'Electronic', 'Folk', 'Funk', 'Hip-Hop', 'House',
