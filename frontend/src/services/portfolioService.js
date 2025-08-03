@@ -12,7 +12,7 @@ export const portfolioService = {
             if (mediaType) params.append('mediaType', mediaType);
 
             const response = await api.get(`/api/v1/content/user/${userId}/portfolio?${params}`);
-            console.log('[PortfolioService] Making API request to:', url);
+            console.log('[PortfolioService] Making API request to:', response);
             console.log('[PortfolioService] API Response:', {
                 status: response.status,
                 statusText: response.statusText,
