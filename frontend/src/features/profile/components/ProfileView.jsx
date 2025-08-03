@@ -17,6 +17,14 @@ const ProfileView = ({ user, isOwnProfile = false }) => {
     const currentUser = useSelector(selectUser);
     const [activeSection, setActiveSection] = useState('about');
 
+    // Debug log to help track the user object structure
+    console.log('[ProfileView] User object received:', {
+        user: user,
+        userId: user?._id,
+        username: user?.username,
+        isOwnProfile
+    });
+
     return (
         <div className="min-h-screen bg-floral-white">
             <Header />
@@ -38,7 +46,7 @@ const ProfileView = ({ user, isOwnProfile = false }) => {
                             Professionals
                         </Link>
                         <span>/</span>
-                        <span className="text-eerie-black font-medium">{user.username}</span>
+                        <span className="text-eerie-black font-medium">{user?.username}</span>
                     </nav>
 
                     {/* Profile Header */}
@@ -83,13 +91,14 @@ const ProfileView = ({ user, isOwnProfile = false }) => {
                                         </Link>
                                     )}
                                 </div>
-                                <ProfilePortfolio userId={user.userId} isOwnProfile={isOwnProfile} />
+                                {/* FIX: Use user._id instead of user.userId */}
+                                <ProfilePortfolio userId={user?._id} isOwnProfile={isOwnProfile} />
                             </div>
 
                             {/* Reviews Section */}
                             <div>
                                 <h2 className="text-2xl font-bold text-eerie-black mb-6">
-                                    Reviews ({user.reviews?.length || 656})
+                                    Reviews ({user?.reviews?.length || 656})
                                 </h2>
                                 <ProfileReviews user={user} />
                             </div>

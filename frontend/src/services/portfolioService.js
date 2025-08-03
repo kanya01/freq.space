@@ -2,12 +2,23 @@ import api from './api';
 
 export const portfolioService = {
     getUserPortfolio: async (userId, options = {}) => {
+        console.log('[PortfolioService] getUserPortfolio called with:', {
+            userId,
+            options
+        });
         try {
             const { mediaType, limit = 50, offset = 0 } = options;
             const params = new URLSearchParams({ limit, offset });
             if (mediaType) params.append('mediaType', mediaType);
 
             const response = await api.get(`/api/v1/content/user/${userId}/portfolio?${params}`);
+            console.log('[PortfolioService] Making API request to:', url);
+            console.log('[PortfolioService] API Response:', {
+                status: response.status,
+                statusText: response.statusText,
+                dataReceived: !!response.data,
+                contentStructure: response.data ? Object.keys(response.data) : []
+            });
             return response.data;
         } catch (error) {
             console.error('Portfolio service error:', error);

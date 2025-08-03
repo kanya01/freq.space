@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import api from '../../../services/api';
 import { uploadContent } from '../contentSlice';
 import {
     CloudArrowUpIcon,
@@ -24,9 +23,7 @@ const ContentUpload = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    // const { isUploading, uploadProgress } = useSelector((state) => state.content);
     const { loading: isUploading, uploadProgress, error } = useSelector((state) => state.content);
-
 
     // State management
     const [selectedType, setSelectedType] = useState(null);
@@ -34,7 +31,7 @@ const ContentUpload = () => {
     const [filePreview, setFilePreview] = useState(null);
     const [coverFile, setCoverFile] = useState(null);
     const [coverPreview, setCoverPreview] = useState('');
-
+    const [tagInput, setTagInput] = useState('');
 
     const [validationError, setValidationError] = useState('');
     const [showImageEditor, setShowImageEditor] = useState(false);
@@ -50,157 +47,112 @@ const ContentUpload = () => {
         isPublic: true,
         // Type-specific fields
         genre: '',
-        altText: ''
+        altText: '',
+        location: '',
+        collaborators: '',
+        equipment: '',
+        // Video specific
+        resolution: '',
+        frameRate: '',
+        // Audio specific
+        bpm: '',
+        key: '',
+        instruments: ''
     });
-    const [tagInput, setTagInput] = useState('');
 
-    // Refs
+    // File input ref
     const fileInputRef = useRef(null);
-    const coverInputRef = useRef(null);
-    const dropZoneRef = useRef(null);
 
-    // Content type configuration
     const contentTypes = [
         {
             type: 'image',
             label: 'Image',
             icon: PhotoIcon,
-            accept: 'image/jpeg,image/png,image/gif,image/webp',
-            maxSize: 10, // MB
-            color: 'from-flame-50 to-flame-100',
-            borderColor: 'border-flame-300',
-            iconBg: 'bg-flame-100',
-            iconColor: 'text-flame-600'
+            description: 'Photography, artwork, graphics',
+            accept: 'image/*',
+            maxSize: '10MB'
         },
         {
             type: 'video',
             label: 'Video',
             icon: VideoCameraIcon,
-            accept: 'video/mp4,video/webm,video/ogg,video/quicktime',
-            maxSize: 50, // MB
-            maxDuration: 40, // seconds
-            color: 'from-timberwolf-100 to-timberwolf-200',
-            borderColor: 'border-timberwolf-400',
-            iconBg: 'bg-timberwolf-200',
-            iconColor: 'text-black-olive'
+            description: 'Films, animations, tutorials',
+            accept: 'video/*',
+            maxSize: '100MB'
         },
         {
             type: 'audio',
             label: 'Audio',
             icon: MusicalNoteIcon,
-            accept: 'audio/mpeg,audio/wav,audio/mp3,audio/ogg,audio/flac',
-            maxSize: 30, // MB
-            color: 'from-black-olive-100 to-black-olive-200',
-            borderColor: 'border-black-olive-400',
-            iconBg: 'bg-black-olive-100',
-            iconColor: 'text-eerie-black'
+            description: 'Music, podcasts, sound effects',
+            accept: 'audio/*',
+            maxSize: '50MB'
         }
     ];
 
-    // Drag and drop handlers
-    const handleDragOver = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (dropZoneRef.current) {
-            dropZoneRef.current.classList.add('border-flame-500', 'bg-flame-50');
-        }
-    }, []);
-
-    const handleDragLeave = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (dropZoneRef.current) {
-            dropZoneRef.current.classList.remove('border-flame-500', 'bg-flame-50');
-        }
-    }, []);
-
-    const handleDrop = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (dropZoneRef.current) {
-            dropZoneRef.current.classList.remove('border-flame-500', 'bg-flame-50');
-        }
-
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile && selectedType) {
-            handleFileSelect(droppedFile);
-        }
-    }, [selectedType]);
+    const MAX_FILE_SIZES = {
+        image: 10 * 1024 * 1024, // 10MB
+        video: 100 * 1024 * 1024, // 100MB
+        audio: 50 * 1024 * 1024 // 50MB
+    };
 
     // File handling
-    const handleFileSelect = async (selectedFile) => {
-        setValidationError('');
+    const handleFileSelect = useCallback(async (e) => {
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) return;
 
-        // Get content type config
-        const typeConfig = contentTypes.find(t => t.type === selectedType);
-        if (!typeConfig) return;
+        console.log('[ContentUpload] File selected:', {
+            name: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type
+        });
+
+        // Validate file size
+        const maxSize = MAX_FILE_SIZES[selectedType];
+        if (selectedFile.size > maxSize) {
+            setValidationError(`File size exceeds ${maxSize / (1024 * 1024)}MB limit`);
+            return;
+        }
 
         // Validate file type
-        const fileType = selectedFile.type.split('/')[0];
-        if (fileType !== selectedType) {
+        const contentType = contentTypes.find(t => t.type === selectedType);
+        if (!selectedFile.type.startsWith(selectedType + '/')) {
             setValidationError(`Please select a valid ${selectedType} file`);
             return;
         }
 
-        // Validate file size
-        const maxSizeBytes = typeConfig.maxSize * 1024 * 1024;
-        if (selectedFile.size > maxSizeBytes) {
-            setValidationError(`File size must be less than ${typeConfig.maxSize}MB`);
-            return;
-        }
-
+        setValidationError('');
         setFile(selectedFile);
 
-        // Generate preview based on type
-        switch (selectedType) {
-            case 'image':
-                const imageUrl = URL.createObjectURL(selectedFile);
-                setFilePreview(imageUrl);
-                // Auto-fill title from filename
-                if (!formData.title) {
-                    const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, '');
-                    setFormData(prev => ({ ...prev, title: nameWithoutExt }));
-                }
-                break;
+        // Create preview
+        if (selectedType === 'image') {
+            const reader = new FileReader();
+            reader.onload = (e) => setFilePreview(e.target.result);
+            reader.readAsDataURL(selectedFile);
+        } else if (selectedType === 'video') {
+            const videoURL = URL.createObjectURL(selectedFile);
+            setFilePreview(videoURL);
+        } else if (selectedType === 'audio') {
+            const audioURL = URL.createObjectURL(selectedFile);
+            setFilePreview(audioURL);
 
-            case 'video':
-                const videoUrl = URL.createObjectURL(selectedFile);
-                setFilePreview(videoUrl);
-                // Validate video duration
-                validateVideoDuration(selectedFile);
-                break;
-
-            case 'audio':
-                const audioUrl = URL.createObjectURL(selectedFile);
-                setFilePreview(audioUrl);
-                // Generate waveform
-                try {
-                    const waveform = await generateWaveformData(selectedFile);
-                    setWaveformData(waveform);
-                } catch (err) {
-                    console.error('Error generating waveform:', err);
-                }
-                break;
-        }
-    };
-
-    // Video duration validation
-    const validateVideoDuration = (videoFile) => {
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        video.onloadedmetadata = () => {
-            setVideoDuration(video.duration);
-            if (video.duration > 40) {
-                setValidationError('Video must be 40 seconds or less');
-                setFile(null);
-                setFilePreview(null);
+            // Generate waveform data
+            try {
+                const waveform = await generateWaveformData(selectedFile);
+                setWaveformData(waveform);
+            } catch (error) {
+                console.warn('Failed to generate waveform:', error);
             }
-        };
-        video.src = URL.createObjectURL(videoFile);
-    };
+        }
 
-    // Handle cover image
-    const handleCoverChange = (e) => {
+        // Auto-populate title from filename
+        if (!formData.title) {
+            const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, '');
+            setFormData(prev => ({ ...prev, title: nameWithoutExt }));
+        }
+    }, [selectedType, formData.title]);
+
+    const handleCoverImageSelect = (e) => {
         const coverImg = e.target.files[0];
         if (!coverImg) return;
 
@@ -260,11 +212,10 @@ const ContentUpload = () => {
             return;
         }
 
-        // setIsUploading(true);
-        // setUploadProgress(0);
-
         try {
             const uploadData = new FormData();
+
+            // Add the main media file
             uploadData.append('media', file);
             uploadData.append('title', formData.title);
             uploadData.append('description', formData.description);
@@ -287,7 +238,13 @@ const ContentUpload = () => {
                 uploadData.append('cover', coverFile);
             }
 
-            // REMOVE THE DIRECT API CALL - Only use Redux action
+            // Log FormData contents for debugging
+            console.log('[ContentUpload] FormData contents:');
+            for (let [key, value] of uploadData.entries()) {
+                console.log(`${key}:`, value instanceof File ? `File: ${value.name}` : value);
+            }
+
+            // Use Redux action for upload
             const result = await dispatch(uploadContent(uploadData)).unwrap();
             console.log('[ContentUpload] Upload successful:', result);
 
@@ -303,10 +260,10 @@ const ContentUpload = () => {
                 status: error.response?.status
             });
 
-            setValidationError(error.response?.data?.message || 'Failed to upload content. Please try again.');
-            // setIsUploading(false);
+            setValidationError(error.message || 'Failed to upload content. Please try again.');
         }
     };
+
     const genreOptions = [
         'Alternative', 'Ambient', 'Blues', 'Classical', 'Country',
         'Dance', 'Electronic', 'Folk', 'Funk', 'Hip-Hop', 'House',
@@ -336,7 +293,6 @@ const ContentUpload = () => {
                     <h2 className="text-2xl font-semibold text-eerie-black mb-6 text-center">
                         What would you like to upload?
                     </h2>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {contentTypes.map((type) => {
                             const Icon = type.icon;
@@ -344,22 +300,14 @@ const ContentUpload = () => {
                                 <button
                                     key={type.type}
                                     onClick={() => setSelectedType(type.type)}
-                                    className={`group relative overflow-hidden rounded-xl p-8 bg-gradient-to-br ${type.color} border-2 ${type.borderColor} hover:shadow-xl transition-all duration-300 hover:scale-105`}
+                                    className="group p-8 border-2 border-timberwolf-200 rounded-xl hover:border-flame-400 hover:bg-flame-50 transition-all duration-200 text-center"
                                 >
-                                    <div className="flex flex-col items-center space-y-4">
-                                        <div className={`w-20 h-20 ${type.iconBg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                            <Icon className={`h-10 w-10 ${type.iconColor}`} />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-eerie-black">{type.label}</h3>
-                                        <p className="text-sm text-black-olive-600">
-                                            Max {type.maxSize}MB
-                                            {type.maxDuration && ` • ${type.maxDuration}s max`}
-                                        </p>
+                                    <div className="w-16 h-16 bg-timberwolf-100 group-hover:bg-flame-100 rounded-xl flex items-center justify-center mx-auto mb-4 transition-colors">
+                                        <Icon className="h-8 w-8 text-black-olive-600 group-hover:text-flame-600" />
                                     </div>
-
-                                    <div className="absolute top-2 right-2">
-                                        <SparklesIcon className="h-5 w-5 text-flame-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
+                                    <h3 className="text-lg font-semibold text-eerie-black mb-2">{type.label}</h3>
+                                    <p className="text-black-olive-600 text-sm mb-3">{type.description}</p>
+                                    <span className="text-xs text-black-olive-500">Max size: {type.maxSize}</span>
                                 </button>
                             );
                         })}
@@ -369,202 +317,233 @@ const ContentUpload = () => {
 
             {/* Upload Form */}
             {selectedType && (
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* File Upload Section */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* File Dropzone */}
-                        <div className="bg-white rounded-2xl shadow-lg p-8 border border-timberwolf-200">
-                            <h3 className="text-xl font-semibold text-eerie-black mb-4">
-                                Upload {contentTypes.find(t => t.type === selectedType)?.label}
-                            </h3>
-
-                            <div
-                                ref={dropZoneRef}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`relative border-3 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
-                                    file
-                                        ? 'border-flame-400 bg-flame-50'
-                                        : 'border-timberwolf-300 hover:border-flame-300 hover:bg-timberwolf-50'
-                                }`}
-                            >
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept={contentTypes.find(t => t.type === selectedType)?.accept}
-                                    onChange={(e) => handleFileSelect(e.target.files[0])}
-                                    className="hidden"
-                                />
-
-                                {!file ? (
-                                    <>
-                                        <CloudArrowUpIcon className="h-16 w-16 text-black-olive-400 mx-auto mb-4" />
-                                        <p className="text-lg font-medium text-eerie-black mb-2">
-                                            Drag and drop or click to browse
-                                        </p>
-                                        <p className="text-sm text-black-olive-600">
-                                            {contentTypes.find(t => t.type === selectedType)?.accept.split(',').join(', ')}
-                                        </p>
-                                    </>
-                                ) : (
-                                    <div>
-                                        {/* File preview based on type */}
-                                        {selectedType === 'image' && filePreview && (
-                                            <div className="relative">
-                                                <img
-                                                    src={editedImage ? URL.createObjectURL(editedImage) : filePreview}
-                                                    alt="Preview"
-                                                    className="max-h-64 mx-auto rounded-lg shadow-md"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setShowImageEditor(true);
-                                                    }}
-                                                    className="absolute top-2 right-2 p-2 bg-eerie-black text-white rounded-lg hover:bg-black-olive transition-colors"
-                                                >
-                                                    <PencilIcon className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        {selectedType === 'video' && filePreview && (
-                                            <VideoPreview
-                                                src={filePreview}
-                                                duration={videoDuration}
-                                                maxDuration={40}
-                                            />
-                                        )}
-
-                                        {selectedType === 'audio' && filePreview && (
-                                            <AudioWaveform
-                                                src={filePreview}
-                                                waveformData={waveformData}
-                                            />
-                                        )}
-
-                                        <div className="mt-4">
-                                            <p className="text-sm font-medium text-eerie-black">{file.name}</p>
-                                            <p className="text-xs text-black-olive-600">
-                                                {(file.size / (1024 * 1024)).toFixed(2)} MB
-                                            </p>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setFile(null);
-                                                setFilePreview(null);
-                                                setEditedImage(null);
-                                                setWaveformData(null);
-                                            }}
-                                            className="mt-4 inline-flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                                        >
-                                            <XMarkIcon className="h-4 w-4 mr-2" />
-                                            Remove
-                                        </button>
-                                    </div>
-                                )}
+                <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg border border-timberwolf-200">
+                    {/* Header */}
+                    <div className="p-6 border-b border-timberwolf-200">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                {React.createElement(contentTypes.find(t => t.type === selectedType)?.icon, {
+                                    className: "h-6 w-6 text-flame-600"
+                                })}
+                                <h2 className="text-xl font-semibold text-eerie-black">
+                                    Upload {contentTypes.find(t => t.type === selectedType)?.label}
+                                </h2>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedType(null);
+                                    setFile(null);
+                                    setFilePreview(null);
+                                    setFormData({
+                                        title: '',
+                                        description: '',
+                                        tags: [],
+                                        isPublic: true,
+                                        genre: '',
+                                        altText: '',
+                                        location: '',
+                                        collaborators: '',
+                                        equipment: '',
+                                        resolution: '',
+                                        frameRate: '',
+                                        bpm: '',
+                                        key: '',
+                                        instruments: ''
+                                    });
+                                }}
+                                className="text-black-olive-500 hover:text-eerie-black transition-colors"
+                            >
+                                <XMarkIcon className="h-6 w-6" />
+                            </button>
+                        </div>
+                    </div>
 
-                            {/* Cover Image Upload (for video/audio) */}
-                            {(selectedType === 'video' || selectedType === 'audio') && (
-                                <div className="mt-6">
-                                    <label className="block text-sm font-medium text-black-olive-700 mb-2">
-                                        Cover Image (optional)
+                    <div className="p-6">
+                        {/* Error Display */}
+                        {(validationError || error) && (
+                            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p className="text-red-800 text-sm">{validationError || error}</p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Left Column - File Upload */}
+                            <div className="space-y-6">
+                                {/* File Upload Area */}
+                                <div>
+                                    <label className="block text-sm font-medium text-eerie-black mb-3">
+                                        Select File *
                                     </label>
-                                    <div className="flex items-center space-x-4">
-                                        <input
-                                            ref={coverInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleCoverChange}
-                                            className="hidden"
-                                        />
+                                    {!file ? (
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="border-2 border-dashed border-timberwolf-300 rounded-xl p-8 text-center cursor-pointer hover:border-flame-400 hover:bg-flame-50 transition-colors"
+                                        >
+                                            <CloudArrowUpIcon className="h-12 w-12 text-black-olive-400 mx-auto mb-4" />
+                                            <p className="text-black-olive-600 mb-2">Click to select a file</p>
+                                            <p className="text-sm text-black-olive-500">
+                                                {contentTypes.find(t => t.type === selectedType)?.accept} • Max {contentTypes.find(t => t.type === selectedType)?.maxSize}
+                                            </p>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept={contentTypes.find(t => t.type === selectedType)?.accept}
+                                                onChange={handleFileSelect}
+                                                className="hidden"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {/* File Preview */}
+                                            <div className="border border-timberwolf-200 rounded-xl p-4">
+                                                {selectedType === 'image' && filePreview && (
+                                                    <div className="relative">
+                                                        <img
+                                                            src={filePreview}
+                                                            alt="Preview"
+                                                            className="w-full h-48 object-cover rounded-lg"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowImageEditor(true)}
+                                                            className="absolute top-2 right-2 bg-white rounded-lg p-2 shadow-lg hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            <PencilIcon className="h-4 w-4 text-black-olive-600" />
+                                                        </button>
+                                                    </div>
+                                                )}
 
-                                        {coverPreview ? (
-                                            <div className="relative">
-                                                <img
-                                                    src={coverPreview}
-                                                    alt="Cover"
-                                                    className="h-20 w-20 object-cover rounded-lg"
-                                                />
+                                                {selectedType === 'video' && filePreview && (
+                                                    <VideoPreview
+                                                        src={filePreview}
+                                                        onDurationChange={setVideoDuration}
+                                                    />
+                                                )}
+
+                                                {selectedType === 'audio' && filePreview && (
+                                                    <AudioWaveform
+                                                        src={filePreview}
+                                                        waveformData={waveformData}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            {/* File Info */}
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-black-olive-600">{file.name}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        setCoverFile(null);
-                                                        setCoverPreview('');
+                                                        setFile(null);
+                                                        setFilePreview(null);
+                                                        setEditedImage(null);
+                                                        setWaveformData(null);
                                                     }}
-                                                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                                    className="text-red-600 hover:text-red-700 transition-colors"
                                                 >
-                                                    <XMarkIcon className="h-3 w-3" />
+                                                    Remove
                                                 </button>
                                             </div>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => coverInputRef.current?.click()}
-                                                className="flex items-center px-4 py-2 bg-timberwolf-100 text-black-olive-700 rounded-lg hover:bg-timberwolf-200 transition-colors"
-                                            >
-                                                <PhotoIcon className="h-4 w-4 mr-2" />
-                                                Add Cover
-                                            </button>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            </div>
 
-                        {/* Metadata Form */}
-                        <div className="bg-white rounded-2xl shadow-lg p-8 border border-timberwolf-200">
-                            <h3 className="text-xl font-semibold text-eerie-black mb-4">Details</h3>
-
+                            {/* Right Column - Form Fields */}
                             <div className="space-y-6">
                                 {/* Title */}
                                 <div>
-                                    <label className="block text-sm font-medium text-black-olive-700 mb-2">
-                                        Title <span className="text-red-500">*</span>
+                                    <label className="block text-sm font-medium text-eerie-black mb-2">
+                                        Title *
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.title}
                                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-timberwolf-50 border border-timberwolf-300 rounded-lg text-eerie-black placeholder-black-olive-500 focus:outline-none focus:ring-2 focus:ring-flame-500 focus:border-flame-500 transition-all"
-                                        placeholder={`${selectedType === 'image' ? 'Image' : selectedType === 'video' ? 'Video' : 'Track'} title`}
+                                        className="w-full px-4 py-3 border border-timberwolf-300 rounded-lg focus:ring-2 focus:ring-flame-500 focus:border-transparent transition-colors"
+                                        placeholder="Enter a title for your content"
                                         required
                                     />
                                 </div>
 
                                 {/* Description */}
                                 <div>
-                                    <label className="block text-sm font-medium text-black-olive-700 mb-2">
+                                    <label className="block text-sm font-medium text-eerie-black mb-2">
                                         Description
                                     </label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                         rows={4}
-                                        className="w-full px-4 py-3 bg-timberwolf-50 border border-timberwolf-300 rounded-lg text-eerie-black placeholder-black-olive-500 focus:outline-none focus:ring-2 focus:ring-flame-500 focus:border-flame-500 transition-all resize-none"
-                                        placeholder="Tell people about your content..."
+                                        className="w-full px-4 py-3 border border-timberwolf-300 rounded-lg focus:ring-2 focus:ring-flame-500 focus:border-transparent transition-colors resize-none"
+                                        placeholder="Describe your content..."
                                     />
                                 </div>
 
-                                {/* Type-specific fields */}
+                                {/* Tags */}
+                                <div>
+                                    <label className="block text-sm font-medium text-eerie-black mb-2">
+                                        Tags (Max 5)
+                                    </label>
+                                    <div className="space-y-3">
+                                        <div className="flex space-x-2">
+                                            <div className="relative flex-1">
+                                                <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black-olive-500" />
+                                                <input
+                                                    type="text"
+                                                    value={tagInput}
+                                                    onChange={(e) => setTagInput(e.target.value)}
+                                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                                                    className="w-full pl-10 pr-4 py-2 border border-timberwolf-300 rounded-lg focus:ring-2 focus:ring-flame-500 focus:border-transparent transition-colors"
+                                                    placeholder="Add a tag"
+                                                    disabled={formData.tags.length >= 5}
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleAddTag}
+                                                disabled={!tagInput.trim() || formData.tags.length >= 5}
+                                                className="px-4 py-2 bg-flame-600 text-white rounded-lg hover:bg-flame-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+
+                                        {formData.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {formData.tags.map((tag, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className="inline-flex items-center px-3 py-1 bg-flame-100 text-flame-700 rounded-full text-sm"
+                                                    >
+                                                        {tag}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveTag(tag)}
+                                                            className="ml-2 text-flame-500 hover:text-flame-700"
+                                                        >
+                                                            <XMarkIcon className="h-3 w-3" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Audio-specific fields */}
                                 {selectedType === 'audio' && (
                                     <div>
-                                        <label className="block text-sm font-medium text-black-olive-700 mb-2">
+                                        <label className="block text-sm font-medium text-eerie-black mb-2">
                                             Genre
                                         </label>
                                         <select
                                             value={formData.genre}
                                             onChange={(e) => setFormData(prev => ({ ...prev, genre: e.target.value }))}
-                                            className="w-full px-4 py-3 bg-timberwolf-50 border border-timberwolf-300 rounded-lg text-eerie-black focus:outline-none focus:ring-2 focus:ring-flame-500 focus:border-flame-500 transition-all"
+                                            className="w-full px-4 py-3 border border-timberwolf-300 rounded-lg focus:ring-2 focus:ring-flame-500 focus:border-transparent transition-colors"
                                         >
-                                            <option value="">Select a genre (optional)</option>
+                                            <option value="">Select a genre</option>
                                             {genreOptions.map(genre => (
                                                 <option key={genre} value={genre}>{genre}</option>
                                             ))}
@@ -572,164 +551,76 @@ const ContentUpload = () => {
                                     </div>
                                 )}
 
+                                {/* Image-specific fields */}
                                 {selectedType === 'image' && (
                                     <div>
-                                        <label className="block text-sm font-medium text-black-olive-700 mb-2">
-                                            Alt Text
+                                        <label className="block text-sm font-medium text-eerie-black mb-2">
+                                            Alt Text (for accessibility)
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.altText}
                                             onChange={(e) => setFormData(prev => ({ ...prev, altText: e.target.value }))}
-                                            className="w-full px-4 py-3 bg-timberwolf-50 border border-timberwolf-300 rounded-lg text-eerie-black placeholder-black-olive-500 focus:outline-none focus:ring-2 focus:ring-flame-500 focus:border-flame-500 transition-all"
-                                            placeholder="Describe the image for accessibility"
+                                            className="w-full px-4 py-3 border border-timberwolf-300 rounded-lg focus:ring-2 focus:ring-flame-500 focus:border-transparent transition-colors"
+                                            placeholder="Describe the image for screen readers"
                                         />
                                     </div>
                                 )}
 
-                                {/* Tags */}
+                                {/* Privacy Settings */}
                                 <div>
-                                    <label className="block text-sm font-medium text-black-olive-700 mb-2">
-                                        Tags
-                                    </label>
-                                    <div className="flex items-center space-x-2 mb-3">
-                                        <div className="relative flex-1">
-                                            <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-black-olive-500" />
-                                            <input
-                                                type="text"
-                                                value={tagInput}
-                                                onChange={(e) => setTagInput(e.target.value)}
-                                                onKeyPress={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        handleAddTag();
-                                                    }
-                                                }}
-                                                className="w-full pl-10 pr-4 py-3 bg-timberwolf-50 border border-timberwolf-300 rounded-lg text-eerie-black placeholder-black-olive-500 focus:outline-none focus:ring-2 focus:ring-flame-500 focus:border-flame-500 transition-all"
-                                                placeholder="Add tags (press Enter)"
-                                                disabled={formData.tags.length >= 5}
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleAddTag}
-                                            disabled={!tagInput.trim() || formData.tags.length >= 5}
-                                            className="px-4 py-3 bg-flame-600 text-white rounded-lg hover:bg-flame-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Add
-                                        </button>
-                                    </div>
-
-                                    {formData.tags.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {formData.tags.map(tag => (
-                                                <span
-                                                    key={tag}
-                                                    className="inline-flex items-center px-3 py-1 bg-timberwolf-100 text-black-olive-700 rounded-full text-sm border border-timberwolf-300"
-                                                >
-                                                    {tag}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveTag(tag)}
-                                                        className="ml-2 text-black-olive-500 hover:text-red-600"
-                                                    >
-                                                        <XMarkIcon className="h-3 w-3" />
-                                                    </button>
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <p className="text-xs text-black-olive-500 mt-2">
-                                        Add up to 5 tags to help people discover your content
-                                    </p>
-                                </div>
-
-                                {/* Privacy Setting */}
-                                <div>
-                                    <label className="block text-sm font-medium text-black-olive-700 mb-3">
+                                    <label className="block text-sm font-medium text-eerie-black mb-3">
                                         Privacy
                                     </label>
-                                    <div className="flex items-center space-x-6">
-                                        <label className="flex items-center cursor-pointer">
+                                    <div className="space-y-2">
+                                        <label className="flex items-center">
                                             <input
                                                 type="radio"
+                                                name="privacy"
                                                 checked={formData.isPublic}
                                                 onChange={() => setFormData(prev => ({ ...prev, isPublic: true }))}
-                                                className="sr-only"
+                                                className="h-4 w-4 text-flame-600 focus:ring-flame-500 border-timberwolf-300"
                                             />
-                                            <div className={`w-5 h-5 rounded-full border-2 mr-2 flex items-center justify-center transition-all ${
-                                                formData.isPublic
-                                                    ? 'border-flame-500 bg-flame-500'
-                                                    : 'border-timberwolf-400'
-                                            }`}>
-                                                {formData.isPublic && (
-                                                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                                                )}
-                                            </div>
-                                            <span className="text-eerie-black">Public</span>
+                                            <span className="ml-2 text-sm text-eerie-black">Public - Anyone can view</span>
                                         </label>
-
-                                        <label className="flex items-center cursor-pointer">
+                                        <label className="flex items-center">
                                             <input
                                                 type="radio"
+                                                name="privacy"
                                                 checked={!formData.isPublic}
                                                 onChange={() => setFormData(prev => ({ ...prev, isPublic: false }))}
-                                                className="sr-only"
+                                                className="h-4 w-4 text-flame-600 focus:ring-flame-500 border-timberwolf-300"
                                             />
-                                            <div className={`w-5 h-5 rounded-full border-2 mr-2 flex items-center justify-center transition-all ${
-                                                !formData.isPublic
-                                                    ? 'border-flame-500 bg-flame-500'
-                                                    : 'border-timberwolf-400'
-                                            }`}>
-                                                {!formData.isPublic && (
-                                                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                                                )}
-                                            </div>
-                                            <span className="text-eerie-black">Private</span>
+                                            <span className="ml-2 text-sm text-eerie-black">Private - Only you can view</span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Error Display */}
-                    {validationError && (
-                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <p className="text-red-700 text-sm font-medium">{validationError}</p>
+                        {/* Submit Button */}
+                        <div className="flex justify-end pt-6 border-t border-timberwolf-200 mt-8">
+                            <button
+                                type="submit"
+                                disabled={isUploading || !file}
+                                className="relative px-8 py-3 bg-flame-600 text-white rounded-lg hover:bg-flame-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium overflow-hidden"
+                            >
+                                {isUploading ? (
+                                    <>
+                                        <span className="relative z-10">Uploading... {uploadProgress}%</span>
+                                        <div
+                                            className="absolute inset-0 bg-flame-600 transition-all duration-300"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        <CloudArrowUpIcon className="h-5 w-5 inline mr-2" />
+                                        Upload {selectedType && contentTypes.find(t => t.type === selectedType)?.label}
+                                    </>
+                                )}
+                            </button>
                         </div>
-                    )}
-
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4">
-                        <button
-                            type="button"
-                            onClick={() => navigate(-1)}
-                            className="px-8 py-4 bg-white border-2 border-eerie-black text-eerie-black rounded-xl hover:bg-timberwolf-100 transition-colors font-medium"
-                        >
-                            Cancel
-                        </button>
-
-                        <button
-                            type="submit"
-                            disabled={isUploading || !file || !formData.title.trim()}
-                            className="relative px-8 py-4 bg-eerie-black text-floral-white rounded-xl hover:bg-black-olive transition-all font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-                        >
-                            {isUploading ? (
-                                <>
-                                    <span className="relative z-10">Uploading... {uploadProgress}%</span>
-                                    <div
-                                        className="absolute inset-0 bg-flame-600 transition-all duration-300"
-                                        style={{ width: `${uploadProgress}%` }}
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    <CloudArrowUpIcon className="h-5 w-5 inline mr-2" />
-                                    Upload {selectedType && contentTypes.find(t => t.type === selectedType)?.label}
-                                </>
-                            )}
-                        </button>
                     </div>
                 </form>
             )}
