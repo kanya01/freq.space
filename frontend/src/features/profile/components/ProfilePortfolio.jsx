@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+// import { useSelector } from 'react-redux';
 import { portfolioService } from '../../../services/portfolioService';
 import ContentCard from '../../content/components/ContentCard';
 import LoadingSpinner from '../../../components/LoadingSpinner';
@@ -52,13 +52,34 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
     }, [userId]);
 
     const fetchPortfolioContent = async () => {
+        console.log('[ProfilePortfolio] Starting to fetch portfolio for userId:', userId);
         try {
             setLoading(true);
+            console.log('[ProfilePortfolio] Loading state set to true');
+
+            console.log('[ProfilePortfolio] Calling portfolioService.getUserPortfolio...');
             const data = await portfolioService.getUserPortfolio(userId);
+
+            console.log('[ProfilePortfolio] API Response received:', {
+                contentCount: {
+                    images: data.content.images?.length || 0,
+                    videos: data.content.videos?.length || 0,
+                    audio: data.content.audio?.length || 0
+                },
+                total: data.total,
+                rawData: data
+            });
+
             setPortfolio(data.content);
+            console.log('[ProfilePortfolio] Portfolio state updated successfully');
         } catch (err) {
             // If API fails, show legacy content
-            console.error('Failed to fetch portfolio:', err);
+            console.error('[ProfilePortfolio] Error fetching portfolio:', {
+                error: err,
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status
+            });
             setError('Using offline content');
             // Convert legacy items to proper format
             const grouped = {
@@ -68,6 +89,7 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
             };
             setPortfolio(grouped);
         } finally {
+            console.log('[ProfilePortfolio] Setting loading to false');
             setLoading(false);
         }
     };

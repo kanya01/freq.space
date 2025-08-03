@@ -11,20 +11,20 @@ const initialState = {
 
 export const uploadContent = createAsyncThunk(
     'content/upload',
-    async (formData, { rejectWithValue }) => {
+    // Pass `thunkAPI` to get access to `dispatch`.
+    async (uploadData, { dispatch, rejectWithValue }) => {
         try {
-            const response = await api.post('/api/v1/content', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                },
+            const response = await api.post('/api/v1/content', uploadData, {
                 onUploadProgress: (progressEvent) => {
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    // Dispatch an action to update progress in the Redux store.
+                    // This assumes you have a `setUploadProgress` action in your slice.
                     dispatch(setUploadProgress(progress));
                 }
             });
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Upload failed');
         }
     }
 );

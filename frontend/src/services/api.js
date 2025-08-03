@@ -2,9 +2,12 @@
 import axios from 'axios';
 
 const api = axios.create({
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    // headers: {
+    //     'Content-Type': 'application/json',
+    // },
+    // baseURL: window.PORT || process.env.PORT || 'http://localhost:5001',
+    //BREAKING CHANGE: Use relative URL for local development
+    //CONTENT UPLOAD WORKS WITHOUT SETTING BASE URL?
 });
 
 // Request interceptor for adding auth token
