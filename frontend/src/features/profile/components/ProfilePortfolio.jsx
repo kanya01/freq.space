@@ -8,7 +8,8 @@ import {
     VideoCameraIcon,
     MusicalNoteIcon,
     PlusIcon,
-    ExclamationTriangleIcon
+    ExclamationTriangleIcon,
+    Squares2X2Icon
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
@@ -27,7 +28,7 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
         apiCallCount: 0
     });
 
-    // Keep existing hardcoded items as fallback during transition
+    // Sample content for development
     const legacyPortfolioItems = [
         {
             id: 'legacy-1',
@@ -35,7 +36,11 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
             title: 'Midnight Sessions',
             description: 'Late night acoustic vibes',
             mediaUrl: '/assets/audio/sample1.mp3',
-            tags: ['acoustic', 'chill'],
+            coverUrl: '/assets/images/audio-cover1.jpg',
+            tags: ['acoustic', 'chill', 'night'],
+            likes: 42,
+            comments: 5,
+            views: 128,
             createdAt: new Date('2024-01-15'),
             isLegacy: true
         },
@@ -45,8 +50,26 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
             title: 'Urban Landscapes',
             description: 'City photography series',
             mediaUrl: '/assets/images/urban1.jpg',
-            tags: ['photography', 'urban'],
+            tags: ['photography', 'urban', 'city'],
+            likes: 89,
+            comments: 12,
+            views: 234,
             createdAt: new Date('2024-01-10'),
+            isLegacy: true
+        },
+        {
+            id: 'legacy-3',
+            mediaType: 'video',
+            title: 'Creative Process Timelapse',
+            description: 'Behind the scenes of my latest project',
+            mediaUrl: '/assets/videos/timelapse1.mp4',
+            thumbnailUrl: '/assets/images/video-thumb1.jpg',
+            tags: ['timelapse', 'process', 'creative'],
+            likes: 156,
+            comments: 23,
+            views: 567,
+            duration: 180,
+            createdAt: new Date('2024-01-20'),
             isLegacy: true
         }
     ];
@@ -61,91 +84,34 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
         }
     }, [userId]);
 
-    const addNetworkRequest = (method, url, status, error = null) => {
-        setDebugInfo(prev => ({
-            ...prev,
-            networkRequests: [...prev.networkRequests.slice(-4), {
-                method,
-                url,
-                status,
-                error,
-                timestamp: new Date().toISOString()
-            }],
-            apiCallCount: prev.apiCallCount + 1
-        }));
-    };
-
     const fetchPortfolioContent = async () => {
-        console.log('[ProfilePortfolio] Starting to fetch portfolio for userId:', userId);
-
         try {
             setLoading(true);
             setError(null);
-            console.log('[ProfilePortfolio] Loading state set to true');
 
-            const startTime = Date.now();
-            addNetworkRequest('GET', `/api/v1/content/user/${userId}/portfolio`, 'PENDING');
-
-            console.log('[ProfilePortfolio] Calling portfolioService.getUserPortfolio...');
             const data = await portfolioService.getUserPortfolio(userId);
 
-            const endTime = Date.now();
-            const duration = endTime - startTime;
-
-            console.log('[ProfilePortfolio] API Response received:', {
-                duration: `${duration}ms`,
-                contentCount: {
-                    images: data.content.images?.length || 0,
-                    videos: data.content.videos?.length || 0,
-                    audio: data.content.audio?.length || 0
-                },
-                total: data.total,
-                hasContent: !!(data.content.images?.length || data.content.videos?.length || data.content.audio?.length),
-                rawData: data
-            });
-
-            // Update debug info with success
-            addNetworkRequest('GET', `/api/v1/content/user/${userId}/portfolio`, 200);
-            setDebugInfo(prev => ({
-                ...prev,
-                lastFetchTime: new Date().toISOString(),
-                lastResponseSize: JSON.stringify(data).length
-            }));
-
-            // Check if we actually got content
-            const hasAnyContent = data.content.images?.length || data.content.videos?.length || data.content.audio?.length;
+            const hasAnyContent = data.content.images?.length ||
+                data.content.videos?.length ||
+                data.content.audio?.length;
 
             if (!hasAnyContent) {
-                console.log('[ProfilePortfolio] No content found, using legacy fallback');
-                // Convert legacy items to proper format
+                // Use sample content as fallback
                 const grouped = {
                     images: legacyPortfolioItems.filter(item => item.mediaType === 'image'),
                     videos: legacyPortfolioItems.filter(item => item.mediaType === 'video'),
                     audio: legacyPortfolioItems.filter(item => item.mediaType === 'audio')
                 };
                 setPortfolio(grouped);
-                setError('No uploaded content found - showing sample content');
             } else {
                 setPortfolio(data.content);
-                console.log('[ProfilePortfolio] Portfolio state updated successfully');
             }
 
         } catch (err) {
-            console.error('[ProfilePortfolio] Error fetching portfolio:', {
-                error: err,
-                message: err.message,
-                response: err.response?.data,
-                status: err.response?.status,
-                userId: userId
-            });
-
-            // Update debug info with error
-            addNetworkRequest('GET', `/api/v1/content/user/${userId}/portfolio`, err.response?.status || 500, err.message);
-
+            console.error('[ProfilePortfolio] Error fetching portfolio:', err);
             setError(`Failed to load portfolio: ${err.message || 'Unknown error'}`);
 
-            // Still show legacy content as fallback
-            console.log('[ProfilePortfolio] Using legacy content due to error');
+            // Show sample content as fallback
             const grouped = {
                 images: legacyPortfolioItems.filter(item => item.mediaType === 'image'),
                 videos: legacyPortfolioItems.filter(item => item.mediaType === 'video'),
@@ -153,15 +119,11 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
             };
             setPortfolio(grouped);
         } finally {
-            console.log('[ProfilePortfolio] Setting loading to false');
             setLoading(false);
         }
     };
 
     const filterContent = () => {
-        console.log('[ProfilePortfolio] Filtering content for tab:', activeTab);
-        console.log('[ProfilePortfolio] Current portfolio state:', portfolio);
-
         switch(activeTab) {
             case 'images':
                 return portfolio.images || [];
@@ -170,21 +132,18 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
             case 'audio':
                 return portfolio.audio || [];
             default:
-                const allContent = [
+                return [
                     ...(portfolio.images || []),
                     ...(portfolio.videos || []),
                     ...(portfolio.audio || [])
                 ];
-                console.log('[ProfilePortfolio] All content combined:', allContent);
-                return allContent;
         }
     };
 
     const filteredContent = filterContent();
-    console.log('[ProfilePortfolio] Filtered content:', filteredContent);
 
     const tabs = [
-        { id: 'all', label: 'All', icon: null },
+        { id: 'all', label: 'All', icon: Squares2X2Icon },
         { id: 'images', label: 'Images', icon: PhotoIcon },
         { id: 'videos', label: 'Videos', icon: VideoCameraIcon },
         { id: 'audio', label: 'Audio', icon: MusicalNoteIcon }
@@ -205,65 +164,82 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
         }
     };
 
+    // Loading skeleton component
+    const LoadingSkeleton = () => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {[1, 2, 3].map(i => (
+                <div key={i} className="bg-timberwolf-100 rounded-xl overflow-hidden animate-pulse">
+                    <div className="h-64 bg-gradient-to-br from-timberwolf-200 to-timberwolf-100" />
+                    <div className="p-4 space-y-3">
+                        <div className="h-6 bg-timberwolf-200 rounded w-3/4" />
+                        <div className="h-4 bg-timberwolf-200 rounded" />
+                        <div className="flex gap-4">
+                            <div className="h-4 w-12 bg-timberwolf-200 rounded" />
+                            <div className="h-4 w-12 bg-timberwolf-200 rounded" />
+                            <div className="h-4 w-12 bg-timberwolf-200 rounded" />
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
     if (loading) {
         return (
-            <div className="text-center py-12">
-                <LoadingSpinner />
-                <p className="mt-4 text-black-olive-600">Loading portfolio...</p>
-                <DebugPanel
-                    loading={loading}
-                    error={error}
-                    data={portfolio}
-                    networkRequests={debugInfo.networkRequests}
-                    componentName="ProfilePortfolio"
-                    additionalInfo={{
-                        userId,
-                        activeTab,
-                        apiCallCount: debugInfo.apiCallCount,
-                        lastFetchTime: debugInfo.lastFetchTime
-                    }}
-                />
+            <div className="relative min-h-[400px]">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-eerie-black">Portfolio</h2>
+                </div>
+                <LoadingSkeleton />
             </div>
         );
     }
 
     return (
-        <div>
-            {/* Error Banner */}
-            {error && (
-                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-amber-400 mr-2" />
-                        <span className="text-amber-800 text-sm">{error}</span>
-                        <button
-                            onClick={fetchPortfolioContent}
-                            className="ml-auto text-amber-600 hover:text-amber-800 text-sm font-medium"
-                        >
-                            Retry
-                        </button>
-                    </div>
-                </div>
-            )}
+        <div className="relative min-h-[400px]">
+            {/* Portfolio Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h2 className="text-2xl font-bold text-eerie-black">Portfolio</h2>
+                {isOwnProfile && (
+                    <Link
+                        to="/upload"
+                        className="inline-flex items-center justify-center px-4 py-2 bg-flame-600 text-white rounded-lg hover:bg-flame-700 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg group"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-200" />
+                        Upload Content
+                    </Link>
+                )}
+            </div>
 
-            {/* Tab Navigation */}
-            <div className="flex space-x-1 mb-6 bg-timberwolf-100 p-1 rounded-lg">
-                {tabs.map((tab) => {
+            {/* Filter Tabs */}
+            <div className="flex gap-2 p-1 bg-timberwolf-100 rounded-xl mb-8 overflow-x-auto scrollbar-hide">
+                {tabs.map(tab => {
                     const Icon = tab.icon;
                     const count = getContentCount(tab.id);
+                    const isActive = activeTab === tab.id;
 
                     return (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors text-sm font-medium ${
-                                activeTab === tab.id
-                                    ? 'bg-white text-eerie-black shadow-sm'
-                                    : 'text-black-olive-600 hover:text-eerie-black'
-                            }`}
+                            className={`
+                                flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3 rounded-lg
+                                font-medium text-sm transition-all duration-200 whitespace-nowrap
+                                ${isActive
+                                ? 'bg-eerie-black text-floral-white shadow-md'
+                                : 'text-black-olive-700 hover:bg-timberwolf-200'
+                            }
+                            `}
                         >
-                            {Icon && <Icon className="h-4 w-4" />}
+                            {Icon && <Icon className="h-5 w-5" />}
                             <span>{tab.label}</span>
-                            <span className="bg-black-olive-200 text-black-olive-600 px-2 py-0.5 rounded-full text-xs">
+                            <span className={`
+                                ml-2 px-2 py-0.5 text-xs rounded-full
+                                ${isActive
+                                ? 'bg-floral-white/20'
+                                : 'bg-black-olive-200 text-black-olive-700'
+                            }
+                            `}>
                                 {count}
                             </span>
                         </button>
@@ -271,16 +247,31 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
                 })}
             </div>
 
-            {/* Content Grid */}
+            {/* Error State */}
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-red-800">{error}</p>
+                        {!filteredContent.length && (
+                            <p className="text-red-600 text-sm mt-1">
+                                Showing sample content as fallback
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Content Grid or Empty State */}
             {filteredContent.length === 0 ? (
-                <div className="text-center py-12 bg-timberwolf-50 rounded-xl border border-timberwolf-200">
-                    <div className="max-w-md mx-auto">
+                <div className="col-span-full text-center py-16 px-8 bg-timberwolf-50 rounded-xl border-2 border-dashed border-timberwolf-300">
+                    <div className="max-w-sm mx-auto">
                         {activeTab === 'all' ? (
                             <>
-                                <div className="w-16 h-16 bg-black-olive-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <PlusIcon className="h-8 w-8 text-black-olive-500" />
+                                <div className="w-20 h-20 mx-auto mb-4 bg-timberwolf-200 rounded-full flex items-center justify-center">
+                                    <Squares2X2Icon className="h-10 w-10 text-black-olive-400" />
                                 </div>
-                                <h3 className="text-lg font-medium text-eerie-black mb-2">
+                                <h3 className="text-lg font-semibold text-eerie-black mb-2">
                                     {isOwnProfile ? 'No content uploaded yet' : 'No content available'}
                                 </h3>
                                 <p className="text-black-olive-600 mb-6">
@@ -291,9 +282,9 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
                                 {isOwnProfile && (
                                     <Link
                                         to="/upload"
-                                        className="inline-flex items-center px-6 py-3 bg-eerie-black text-floral-white rounded-lg hover:bg-black-olive transition-colors"
+                                        className="inline-flex items-center px-6 py-3 bg-eerie-black text-floral-white rounded-lg hover:bg-black-olive transition-colors group"
                                     >
-                                        <PlusIcon className="h-5 w-5 mr-2" />
+                                        <PlusIcon className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform" />
                                         Upload Content
                                     </Link>
                                 )}
@@ -308,7 +299,7 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fadeIn">
                     {filteredContent.map(item => (
                         <ContentCard
                             key={item._id || item.id}
@@ -332,9 +323,6 @@ const ProfilePortfolio = ({ userId, isOwnProfile }) => {
                     activeTab,
                     filteredContentCount: filteredContent.length,
                     totalContent: getContentCount('all'),
-                    apiCallCount: debugInfo.apiCallCount,
-                    lastFetchTime: debugInfo.lastFetchTime,
-                    lastResponseSize: debugInfo.lastResponseSize
                 }}
             />
         </div>
