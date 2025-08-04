@@ -70,7 +70,64 @@ export default {
       },
       fontFamily: {
         'sans': ['Inter', 'system-ui', 'sans-serif'],
-      }
+      },
+      animation: {
+        'fadeIn': 'fadeIn 300ms ease-out',
+        'slideUp': 'slideUp 300ms ease-out',
+        'slideDown': 'slideDown 300ms ease-out',
+        'scaleIn': 'scaleIn 200ms ease-out',
+        'shimmer': 'shimmer 1.5s infinite linear',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(10px)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          },
+        },
+        slideUp: {
+          '0%': {
+            transform: 'translateY(100%)',
+            opacity: '0'
+          },
+          '100%': {
+            transform: 'translateY(0)',
+            opacity: '1'
+          },
+        },
+        slideDown: {
+          '0%': {
+            transform: 'translateY(-100%)',
+            opacity: '0'
+          },
+          '100%': {
+            transform: 'translateY(0)',
+            opacity: '1'
+          },
+        },
+        scaleIn: {
+          '0%': {
+            transform: 'scale(0.9)',
+            opacity: '0'
+          },
+          '100%': {
+            transform: 'scale(1)',
+            opacity: '1'
+          },
+        },
+        shimmer: {
+          '0%': {
+            backgroundPosition: '-200% 0',
+          },
+          '100%': {
+            backgroundPosition: '200% 0',
+          },
+        },
+      },
     },
   },
   plugins: [],

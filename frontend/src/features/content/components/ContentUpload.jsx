@@ -92,7 +92,7 @@ const ContentUpload = () => {
 
     const MAX_FILE_SIZES = {
         image: 10 * 1024 * 1024, // 10MB
-        video: 100 * 1024 * 1024, // 100MB
+        video: 500 * 1024 * 1024, // 100MB
         audio: 50 * 1024 * 1024 // 50MB
     };
 
