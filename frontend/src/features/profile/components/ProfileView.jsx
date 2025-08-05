@@ -80,17 +80,17 @@ const ProfileView = ({ user, isOwnProfile = false }) => {
 
                             {/* Portfolio Section */}
                             <div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-2xl font-bold text-eerie-black">Portfolio</h2>
-                                    {isOwnProfile && (
-                                        <Link
-                                            to="/upload"
-                                            className="text-flame-600 hover:text-flame-700 text-sm font-medium transition-colors"
-                                        >
-                                            + Upload Content
-                                        </Link>
-                                    )}
-                                </div>
+                                {/*<div className="flex items-center justify-between mb-6">*/}
+                                {/*    <h2 className="text-2xl font-bold text-eerie-black">Portfolio</h2>*/}
+                                {/*    {isOwnProfile && (*/}
+                                {/*        <Link*/}
+                                {/*            to="/upload"*/}
+                                {/*            className="text-flame-600 hover:text-flame-700 text-sm font-medium transition-colors"*/}
+                                {/*        >*/}
+                                {/*            + Upload Content*/}
+                                {/*        </Link>*/}
+                                {/*    )}*/}
+                                {/*</div>*/}
                                 {/* FIX: Use user._id instead of user.userId */}
                                 <ProfilePortfolio userId={user?._id} isOwnProfile={isOwnProfile} />
                             </div>
