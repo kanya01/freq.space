@@ -46,7 +46,7 @@ const storage = multer.diskStorage({
             // Cover art for tracks
             uploadPath = path.join(uploadPath, 'covers');
         }
-        else if (file.fieldname.startsWith('media_')) {
+        else if (file.fieldname.startsWith('media')) {
             // Media files for posts
             uploadPath = path.join(uploadPath, 'content');
         }

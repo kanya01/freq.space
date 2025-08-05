@@ -59,19 +59,15 @@ app.get('/', (req, res) => res.send('API Running'));
 
 // Serve static files
 app.use('/uploads', (req, res, next) => {
+    console.log(`Static file request: ${req.url}`);
     // Add headers to allow cross-origin access to files
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
 }, express.static(path.join(__dirname, 'uploads')));
 
-app.use('/uploads', (req, res, next) => {
-    console.log(`Static file request: ${req.url}`);
-    next();
-});
 
 // API Routes
-app.get('/', (req, res) => res.send('API Running')); // Keep basic test route
 app.use('/api/v1/auth', authRoutes); // Use auth routes
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/profile', profileRoutes);
