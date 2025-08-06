@@ -8,6 +8,7 @@ const api = axios.create({
     // baseURL: window.PORT || process.env.PORT || 'http://localhost:5001',
     //BREAKING CHANGE: Use relative URL for local development
     //CONTENT UPLOAD WORKS WITHOUT SETTING BASE URL?
+    // baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001',
 });
 
 // Request interceptor for adding auth token

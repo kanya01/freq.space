@@ -4,7 +4,7 @@ const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const path = require('path');
 const fs = require('fs').promises;
-const mm = require('music-metadata');
+// const mm = require('music-metadata');
 
 // Simplified waveform data generation (without the AudioContext which might not be available in Node)
 const generateWaveformData = async (filePath) => {
@@ -67,6 +67,7 @@ exports.uploadTrack = async (req, res) => {
         // Extract audio metadata
         let duration = 0;
         try {
+            const mm = await import('music-metadata');
             const metadata = await mm.parseFile(trackPath);
             duration = metadata.format.duration || 0;
         } catch (err) {
