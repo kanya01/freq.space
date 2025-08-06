@@ -43,7 +43,7 @@ uploadDirs.forEach(dir => {
 
 // Init Middleware
 app.use(cors({
-    origin: '*', // In production, restrict this to your frontend domain
+    origin: 'https://freq-space-spring-frost-3404.fly.dev', // In production, restrict this to your frontend domain
     credentials: true,
     exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
 })); // Enable CORS for all origins (adjust for production)

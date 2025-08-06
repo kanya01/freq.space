@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { portfolioService } from '../../../services/portfolioService';
-import ContentCard from '../../content/components/ContentCard';
+import ContentCard from '../../content/components/ContentCard.jsx';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import DebugPanel from '../../../components/DebugPanel';
 import {

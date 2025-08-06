@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../auth/authSlice';
 import ProfileHeader from './ProfileHeader';
 import ProfileAbout from './ProfileAbout';
-import ProfileServices from './ProfileServices';
+import ProfileServices from './ProfileServices.jsx';
 import ProfilePortfolio from './ProfilePortfolio';
 import ProfileReviews from './ProfileReviews';
 import Header from '../../../components/layout/Header';
