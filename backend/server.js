@@ -42,11 +42,20 @@ uploadDirs.forEach(dir => {
 });
 
 // Init Middleware
-app.use(cors({
-    origin: 'https://freq-space-spring-frost-3404.fly.dev', // In production, restrict this to your frontend domain
-    credentials: true,
-    exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
-})); // Enable CORS for all origins (adjust for production)
+// app.use(cors({
+//     origin: 'https://freq-space-spring-frost-3404.fly.dev', // In production, restrict this to your frontend domain
+//     credentials: true,
+//     exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+// })); // Enable CORS for all origins (adjust for production)
+const corsOptions = {
+    origin: 'https://freq-space-spring-frost-3404.fly.dev',
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true, // Important for auth cookies/headers
+    optionsSuccessStatus: 204 // For legacy browser compatibility with preflight
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json()); // Parse JSON request bodies
 
 // Passport middleware initialization
